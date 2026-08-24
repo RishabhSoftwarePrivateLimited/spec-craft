@@ -1,0 +1,11 @@
+# Auto-requests review from the right Rishabh Software Private Limited team on PRs touching these paths.
+# Enforced by GitHub only if branch protection requires CODEOWNERS review.
+# Team, not individuals — team membership is already gated by @rishabhsoft.com
+# org membership, so it's the real enforcement point, not this file.
+
+/templates/agent-claude/  @rspl-org/claude-tooling
+/templates/agent-gemini/  @rspl-org/gemini-tooling
+/templates/agent-copilot/ @rspl-org/copilot-tooling
+/templates/core/          @rspl-org/sdd-workflow
+/src/                     @rspl-org/sdd-workflow
+MAINTAINERS.md            @rspl-org/sdd-workflow

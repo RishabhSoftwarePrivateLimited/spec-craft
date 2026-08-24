@@ -1,0 +1,48 @@
+{
+  "name": "@rspl/speccraft",
+  "version": "0.1.0",
+  "description": "Scaffold the Rishabh Software Private Limited spec-driven-development workflow (spec/, agent commands) into a project",
+  "bin": {
+    "speccraft": "bin/speccraft.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/",
+    "build:examples": "node scripts/build-examples.js",
+    "prepack": "node scripts/prepack.js",
+    "postpack": "node scripts/postpack.js"
+  },
+  "keywords": [
+    "sdd",
+    "spec-driven-development",
+    "claude-code",
+    "gemini-cli",
+    "copilot",
+    "scaffold",
+    "create"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RishabhSoftwarePrivateLimited/spec-craft.git"
+  },
+  "homepage": "https://github.com/RishabhSoftwarePrivateLimited/spec-craft#readme",
+  "bugs": "https://github.com/RishabhSoftwarePrivateLimited/spec-craft/issues",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "fs-extra": "^11.2.0"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0"
+  }
+}

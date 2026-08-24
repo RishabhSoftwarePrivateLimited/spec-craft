@@ -1,0 +1,95 @@
+claude-only/
+├── .claude/
+│   └── commands/
+│       ├── speccraft.change.md
+│       ├── speccraft.decompose.md
+│       ├── speccraft.implement.md
+│       ├── speccraft.integration-test.md
+│       ├── speccraft.onboard.md
+│       ├── speccraft.orchestrate.md
+│       ├── speccraft.scaffold.md
+│       ├── speccraft.sync-swagger.md
+│       ├── speccraft.tech-debt.md
+│       ├── speccraft.tech-design.md
+│       ├── speccraft.unit-test.md
+│       └── speccraft.validate.md
+├── .gitignore
+├── AGENTS.md
+├── CLAUDE.md
+├── README.md
+└── spec/
+    ├── AGENTS.md
+    ├── architecture/
+    │   ├── API-CONTRACT-SOURCE.md
+    │   ├── NFR-SUMMARY.md
+    │   └── README.md
+    ├── ARCHITECTURE-REFERENCES.md
+    ├── business/
+    │   ├── cr-changes/
+    │   │   ├── CR-TEMPLATE.md
+    │   │   └── README.md
+    │   └── README.md
+    ├── commands/
+    │   ├── README.md
+    │   ├── speccraft.change.md
+    │   ├── speccraft.decompose.md
+    │   ├── speccraft.implement.md
+    │   ├── speccraft.integration-test.md
+    │   ├── speccraft.onboard.md
+    │   ├── speccraft.orchestrate.md
+    │   ├── speccraft.scaffold.md
+    │   ├── speccraft.sync-swagger.md
+    │   ├── speccraft.tech-debt.md
+    │   ├── speccraft.tech-design.md
+    │   ├── speccraft.unit-test.md
+    │   └── speccraft.validate.md
+    ├── init.md
+    ├── lld/
+    │   └── README.md
+    ├── progress/
+    │   ├── README.md
+    │   └── shared/
+    │       └── README.md
+    ├── README.md
+    ├── REVIEW-AND-REVISION-POLICY.md
+    ├── sdd-insights/
+    │   ├── README.md
+    │   └── sdd-insights.html
+    ├── SPEC-FOLDER-STRUCTURE.md
+    ├── SPEC-HIERARCHY.md
+    ├── SPEC-VERSION.md
+    ├── tasks/
+    │   └── README.md
+    ├── traceability/
+    │   ├── README.md
+    │   ├── shared/
+    │   │   ├── scaffold-backend/
+    │   │   │   └── TRACEABILITY.md
+    │   │   ├── scaffold-frontend/
+    │   │   │   └── TRACEABILITY.md
+    │   │   └── STORY-DEPENDENCIES.md
+    │   └── TRACEABILITY.md
+    ├── WORKFLOW-OVERVIEW.md
+    └── workflows/
+        ├── change-request/
+        │   └── CHANGE-REQUEST-STAGE.md
+        ├── decomposition/
+        │   └── DECOMPOSITION-STAGE.md
+        ├── implementation/
+        │   ├── IMPLEMENTATION-STAGE.md
+        │   └── README.md
+        ├── integration-testing/
+        │   ├── INTEGRATION-TESTING-STAGE.md
+        │   └── README.md
+        ├── lld/
+        │   └── LLD-STAGE.md
+        ├── README.md
+        ├── shared/
+        │   ├── SHARED-POLICIES.md
+        │   ├── STAGE-CONTRACT.md
+        │   └── TRACEABILITY-RULES.md
+        ├── testing/
+        │   ├── README.md
+        │   └── TESTING-STAGE.md
+        └── validation/
+            └── VALIDATION-STAGE.md

@@ -1,0 +1,38 @@
+# --- SDD boilerplate ---
+# BOILERPLATE-ONLY — every rule below exists only to keep this template's empty
+# shell clean for distribution. Before real project work begins, prune this file:
+#   - delete the `src-code-frontend/` / `src-code-backend/` lines once `/speccraft.scaffold`
+#     has produced real source code — that code must be committed, not ignored
+#   - delete or narrow the `spec/business/*`, `spec/tasks/*`, `spec/lld/*`,
+#     `spec/traceability/*`, `spec/progress/*` blocks once real spec content
+#     (business specs, LLDs, tasks, progress records, traceability) exists —
+#     each currently keeps only its folder's README.md tracked and silently
+#     ignores everything else, which is correct for an empty boilerplate and
+#     wrong for a real project. See root README.md §Before You Start.
+#
+# SDD workflow output (per-feature generated content) — not scaffold setup.
+# Keep only README.md / index files as directory scaffolding.
+
+spec/business/*
+!spec/business/README.md
+
+spec/tasks/*
+!spec/tasks/README.md
+
+spec/lld/*
+!spec/lld/README.md
+
+spec/traceability/*
+!spec/traceability/README.md
+!spec/traceability/TRACEABILITY.md
+!spec/traceability/shared/
+!spec/business/cr-changes/
+
+spec/progress/*
+!spec/progress/README.md
+!spec/progress/shared/
+
+# generated application deliverables, not workflow setup
+src-code-frontend/
+src-code-backend/
+# --- end SDD boilerplate ---

@@ -1,0 +1,153 @@
+all-agents/
+├── .agents/
+│   └── skills/
+│       ├── speccraft.change/
+│       │   └── SKILL.md
+│       ├── speccraft.decompose/
+│       │   └── SKILL.md
+│       ├── speccraft.implement/
+│       │   └── SKILL.md
+│       ├── speccraft.integration-test/
+│       │   └── SKILL.md
+│       ├── speccraft.onboard/
+│       │   └── SKILL.md
+│       ├── speccraft.orchestrate/
+│       │   └── SKILL.md
+│       ├── speccraft.scaffold/
+│       │   └── SKILL.md
+│       ├── speccraft.sync-swagger/
+│       │   └── SKILL.md
+│       ├── speccraft.tech-debt/
+│       │   └── SKILL.md
+│       ├── speccraft.tech-design/
+│       │   └── SKILL.md
+│       ├── speccraft.unit-test/
+│       │   └── SKILL.md
+│       └── speccraft.validate/
+│           └── SKILL.md
+├── .claude/
+│   └── commands/
+│       ├── speccraft.change.md
+│       ├── speccraft.decompose.md
+│       ├── speccraft.implement.md
+│       ├── speccraft.integration-test.md
+│       ├── speccraft.onboard.md
+│       ├── speccraft.orchestrate.md
+│       ├── speccraft.scaffold.md
+│       ├── speccraft.sync-swagger.md
+│       ├── speccraft.tech-debt.md
+│       ├── speccraft.tech-design.md
+│       ├── speccraft.unit-test.md
+│       └── speccraft.validate.md
+├── .gemini/
+│   └── commands/
+│       ├── speccraft.change.toml
+│       ├── speccraft.decompose.toml
+│       ├── speccraft.implement.toml
+│       ├── speccraft.integration-test.toml
+│       ├── speccraft.onboard.toml
+│       ├── speccraft.orchestrate.toml
+│       ├── speccraft.scaffold.toml
+│       ├── speccraft.sync-swagger.toml
+│       ├── speccraft.tech-debt.toml
+│       ├── speccraft.tech-design.toml
+│       ├── speccraft.unit-test.toml
+│       └── speccraft.validate.toml
+├── .githooks/
+│   └── pre-commit
+├── .github/
+│   ├── copilot-instructions.md
+│   └── prompts/
+│       ├── speccraft.change.prompt.md
+│       ├── speccraft.decompose.prompt.md
+│       ├── speccraft.implement.prompt.md
+│       ├── speccraft.integration-test.prompt.md
+│       ├── speccraft.onboard.prompt.md
+│       ├── speccraft.orchestrate.prompt.md
+│       ├── speccraft.scaffold.prompt.md
+│       ├── speccraft.sync-swagger.prompt.md
+│       ├── speccraft.tech-debt.prompt.md
+│       ├── speccraft.tech-design.prompt.md
+│       ├── speccraft.unit-test.prompt.md
+│       └── speccraft.validate.prompt.md
+├── .gitignore
+├── AGENTS.md
+├── CLAUDE.md
+├── GEMINI.md
+├── README.md
+└── spec/
+    ├── AGENTS.md
+    ├── architecture/
+    │   ├── API-CONTRACT-SOURCE.md
+    │   ├── NFR-SUMMARY.md
+    │   └── README.md
+    ├── ARCHITECTURE-REFERENCES.md
+    ├── business/
+    │   ├── cr-changes/
+    │   │   ├── CR-TEMPLATE.md
+    │   │   └── README.md
+    │   └── README.md
+    ├── commands/
+    │   ├── README.md
+    │   ├── speccraft.change.md
+    │   ├── speccraft.decompose.md
+    │   ├── speccraft.implement.md
+    │   ├── speccraft.integration-test.md
+    │   ├── speccraft.onboard.md
+    │   ├── speccraft.orchestrate.md
+    │   ├── speccraft.scaffold.md
+    │   ├── speccraft.sync-swagger.md
+    │   ├── speccraft.tech-debt.md
+    │   ├── speccraft.tech-design.md
+    │   ├── speccraft.unit-test.md
+    │   └── speccraft.validate.md
+    ├── init.md
+    ├── lld/
+    │   └── README.md
+    ├── progress/
+    │   ├── README.md
+    │   └── shared/
+    │       └── README.md
+    ├── README.md
+    ├── REVIEW-AND-REVISION-POLICY.md
+    ├── sdd-insights/
+    │   ├── README.md
+    │   └── sdd-insights.html
+    ├── SPEC-FOLDER-STRUCTURE.md
+    ├── SPEC-HIERARCHY.md
+    ├── SPEC-VERSION.md
+    ├── tasks/
+    │   └── README.md
+    ├── traceability/
+    │   ├── README.md
+    │   ├── shared/
+    │   │   ├── scaffold-backend/
+    │   │   │   └── TRACEABILITY.md
+    │   │   ├── scaffold-frontend/
+    │   │   │   └── TRACEABILITY.md
+    │   │   └── STORY-DEPENDENCIES.md
+    │   └── TRACEABILITY.md
+    ├── WORKFLOW-OVERVIEW.md
+    └── workflows/
+        ├── change-request/
+        │   └── CHANGE-REQUEST-STAGE.md
+        ├── decomposition/
+        │   └── DECOMPOSITION-STAGE.md
+        ├── implementation/
+        │   ├── IMPLEMENTATION-STAGE.md
+        │   └── README.md
+        ├── integration-testing/
+        │   ├── INTEGRATION-TESTING-STAGE.md
+        │   └── README.md
+        ├── lld/
+        │   └── LLD-STAGE.md
+        ├── README.md
+        ├── shared/
+        │   ├── SHARED-POLICIES.md
+        │   ├── STAGE-CONTRACT.md
+        │   └── TRACEABILITY-RULES.md
+        ├── testing/
+        │   ├── README.md
+        │   └── TESTING-STAGE.md
+        └── validation/
+            └── VALIDATION-STAGE.md

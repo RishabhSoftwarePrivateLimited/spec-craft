@@ -1,0 +1,13 @@
+# package.json's "files" allowlist (bin, src, templates) is the real gate on
+# what ships — this just keeps `npm pack`/`npm publish --dry-run` output clean
+# of everything else if that allowlist is ever loosened.
+test/
+docs/
+examples/
+troubleshoot/
+scripts/
+.github/
+.changeset/
+*.test.js
+CHANGE.md
+PUBLISHING-PLAN.md

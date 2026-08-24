@@ -1,0 +1,72 @@
+#!/bin/sh
+# Pre-commit: block commits that change tracked spec files without
+# bumping spec/SPEC-VERSION.md `current`.
+#
+# Install once per clone:
+#   git config core.hooksPath .githooks
+
+set -e
+
+VERSION_FILE="spec/SPEC-VERSION.md"
+
+# Staged files, relative to repo root.
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+[ -z "$staged" ] && exit 0
+
+# No version file yet — nothing to enforce.
+[ -f "$VERSION_FILE" ] || exit 0
+
+# Tracked paths are the backtick-quoted entries under "## Tracked Spec Files".
+# They're relative to the repo root (e.g. `spec/AGENTS.md`).
+tracked=$(sed -n '/^## Tracked Spec Files/,/^---/p' "$VERSION_FILE" \
+    | grep -o '`[^`]*`' | tr -d '`')
+
+[ -z "$tracked" ] && exit 0
+
+hit=""
+while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    for t in $tracked; do
+        if [ "$f" = "$t" ]; then
+            hit="$hit
+$f"
+        fi
+    done
+done <<EOF
+$staged
+EOF
+
+# No tracked spec file touched by this commit.
+[ -z "$hit" ] && exit 0
+
+echo "pre-commit: tracked spec file(s) changed, checking SPEC-VERSION.md bump:" >&2
+echo "$hit" | sed '/^$/d' | sed 's/^/  - /' >&2
+
+# SPEC-VERSION.md itself must be part of this commit.
+version_staged=$(git diff --cached --name-only -- "$VERSION_FILE")
+if [ -z "$version_staged" ]; then
+    echo "pre-commit: BLOCKED - stage $VERSION_FILE with an incremented 'current' value." >&2
+    exit 1
+fi
+
+get_current() {
+    # $1: ref (e.g. HEAD, or ":0" for index). Prints number after "current:".
+    git show "$1:$VERSION_FILE" 2>/dev/null | grep -m1 '^current:' | sed 's/^current:[[:space:]]*//'
+}
+
+old_current=$(get_current HEAD)
+[ -z "$old_current" ] && old_current=0
+new_current=$(get_current :0)
+
+if [ -z "$new_current" ]; then
+    echo "pre-commit: BLOCKED - $VERSION_FILE staged copy has no 'current:' line." >&2
+    exit 1
+fi
+
+if [ "$new_current" -le "$old_current" ]; then
+    echo "pre-commit: BLOCKED - 'current' must increment (was $old_current, staged $new_current)." >&2
+    exit 1
+fi
+
+exit 0

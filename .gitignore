@@ -1,0 +1,13 @@
+# --- speccraft tool's own dev artifacts (this repo doubles as the npm
+# package's own repo root — see PUBLISHING-PLAN.md) ---
+node_modules/
+npm-debug.log*
+*.tgz
+.npm/
+coverage/
+
+# --- maintainer-only working docs / local publish config — not for the
+# public GitHub repo or the npm tarball (see chat: publish-readiness cleanup) ---
+PUBLISHING-PLAN.md
+ci-automation.md
+.npmrc

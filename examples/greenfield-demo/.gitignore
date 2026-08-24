@@ -1,0 +1,7 @@
+src-code-frontend/node_modules/*
+src-code-frontend/dist/*
+src-code-frontend/.env
+
+src-code-backend/node_modules/*
+src-code-backend/dist/*
+src-code-backend/.env
