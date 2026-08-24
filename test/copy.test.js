@@ -140,7 +140,7 @@ test('.gitignore: preserves custom rules, appends boilerplate once, idempotent o
 test('global install: skips a pre-existing differing file unless --force', () => {
   const fakeHome = tmpDir('fake-home');
   fs.ensureDirSync(path.join(fakeHome, '.claude', 'commands'));
-  const existingPath = path.join(fakeHome, '.claude', 'commands', 'scaffold.md');
+  const existingPath = path.join(fakeHome, '.claude', 'commands', 'speccraft.scaffold.md');
   fs.writeFileSync(existingPath, 'this is the user own custom scaffold command, do not touch');
 
   withFakeHome(fakeHome, () => {
@@ -161,7 +161,7 @@ test('global install: skips a pre-existing differing file unless --force', () =>
 test('global install: --force overwrites a pre-existing differing file', () => {
   const fakeHome = tmpDir('fake-home-force');
   fs.ensureDirSync(path.join(fakeHome, '.claude', 'commands'));
-  const existingPath = path.join(fakeHome, '.claude', 'commands', 'scaffold.md');
+  const existingPath = path.join(fakeHome, '.claude', 'commands', 'speccraft.scaffold.md');
   fs.writeFileSync(existingPath, 'stale content');
 
   withFakeHome(fakeHome, () => {
