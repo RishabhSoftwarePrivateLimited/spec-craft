@@ -1,0 +1,9 @@
+# Normalize line endings so a Windows checkout doesn't corrupt shebang lines
+# (matters here: templates/git-hooks/.githooks/pre-commit is a shell script).
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+
+/templates/git-hooks/.githooks/pre-commit text eol=lf
+/.githooks/pre-commit text eol=lf

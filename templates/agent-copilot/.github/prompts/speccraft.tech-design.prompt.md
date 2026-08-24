@@ -1,0 +1,21 @@
+---
+description: Create the LLD(s) for a business spec file.
+mode: agent
+---
+Read `spec/commands/speccraft.tech-design.md` in full, then create the LLD(s) for the business spec file provided.
+
+Input: ${input:arguments:business spec file path}
+
+Rules before starting:
+- confirm the business spec file exists and is readable
+- active phase must be planning
+- read `spec/architecture/ARCH-DECISIONS.md` §Layer Scope first (ask interactively if absent and the file is empty/placeholder — never infer)
+- read all documents listed in the "Documents This Command Must Use" section of spec/commands/speccraft.tech-design.md
+- produce the LLD(s) for this project's Layer Scope — LLD-FRONTEND-<id>.md and/or LLD-BACKEND-<id>.md — in spec/lld/; when Layer Scope = both, each cites a Companion LLD Reference naming its pair
+- update traceability in the current story's shard: spec/traceability/<mirrored-business-path>/TRACEABILITY.md
+- after producing every in-scope LLD: output all path(s) + summary + minimal handoff block, then STOP
+- do not invoke /speccraft.decompose
+- do not self-approve any LLD
+- wait for human approval (covering every in-scope LLD as one gate) before any downstream stage runs
+
+The canonical contract documents dual-LLD output as the default shape when Layer Scope = both, and single-artifact output for frontend-only or backend-only projects.

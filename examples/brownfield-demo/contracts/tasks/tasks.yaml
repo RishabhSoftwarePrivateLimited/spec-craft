@@ -1,0 +1,129 @@
+openapi: 3.1.0
+info:
+  title: Task Tracker API — tasks module
+  version: 1.0.0
+  description: >
+    REST/JSON API for the `tasks` resource (AD-BACKEND-004). Backed by an
+    in-memory, single-process repository — no persistence across restarts
+    by design (AD-BACKEND-002). No auth (AD-BACKEND-003). This project's
+    `tasks` module was discovered via `/speccraft.onboard`, not designed
+    from a blank slate — `GET`/`POST /api/tasks` are pre-existing behavior;
+    `PATCH /api/tasks/:id` is this project's first delivery story since
+    onboarding (TASK-TRACKER-002).
+servers:
+  - url: http://localhost:4000
+paths:
+  /api/tasks:
+    get:
+      operationId: listTasks
+      summary: List all tasks, newest-first
+      responses:
+        '200':
+          description: >
+            Current tasks, newest-first (ordering guaranteed by repository
+            insertion order, not a separate sort step).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      operationId: createTask
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Blank or whitespace-only title
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/tasks/{id}:
+    patch:
+      operationId: updateTaskCompletion
+      summary: Update a task's completion state to an explicit target value
+      description: >
+        Idempotent by design: sends the target `completed` value rather than
+        a bare "flip", so a duplicate request (e.g. a double-click) leaves
+        the task in the same final state instead of toggling twice.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskCompletionRequest'
+      responses:
+        '200':
+          description: Task's completion state updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: '`completed` missing or not a strict boolean'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No task exists with the given id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Task:
+      type: object
+      required: [id, title, createdAt, completed]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO-8601 timestamp, server-assigned.
+        completed:
+          type: boolean
+          description: Defaults to `false` on creation; updated via `PATCH /api/tasks/{id}`.
+    CreateTaskRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          description: Rejected if empty or whitespace-only after trimming.
+    UpdateTaskCompletionRequest:
+      type: object
+      required: [completed]
+      properties:
+        completed:
+          type: boolean
+          description: The task's target completion state, not a flip instruction.
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: Task not found

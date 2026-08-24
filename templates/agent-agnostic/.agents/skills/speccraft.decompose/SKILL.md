@@ -1,0 +1,21 @@
+---
+name: speccraft.decompose
+description: Decompose approved, in-scope LLD(s) into delivery tasks. Use when user runs $speccraft.decompose or asks to break an approved LLD into tasks.
+---
+Read `spec/commands/speccraft.decompose.md` in full, then decompose the approved, in-scope LLD(s) into delivery tasks.
+
+Input: read the LLD file path(s) the user supplied after invoking this skill — `<lld-fe-file> <lld-be-file>` when Layer Scope = both, or `<lld-file>` for a single-layer project.
+
+Rules before starting:
+- confirm every in-scope LLD file exists and its status is `approved`
+- confirm the argument count matches this project's Layer Scope (`spec/architecture/ARCH-DECISIONS.md` §Layer Scope)
+- active phase must be planning
+- read all documents listed in the "Documents This Command Must Use" section of spec/commands/speccraft.decompose.md
+- produce task files, each with a mandatory Layer: frontend|backend field, in spec/tasks/<module>/ (mirrored per business module, flat, no tasks/ subfolder)
+- update traceability in the current story's shard: spec/traceability/<mirrored-business-path>/TRACEABILITY.md
+- after producing tasks: output task list + execution order + sizing rationale + minimal handoff block, then STOP
+- do not begin execution or scaffold
+- do not self-approve the decomposition
+- wait for human approval before execution begins
+
+The canonical contract documents the dual-input signature (`/speccraft.decompose <lld-fe-file> <lld-be-file>`) for Layer Scope = both, a single-file signature for single-layer projects, and the mandatory Layer field on every emitted task.
