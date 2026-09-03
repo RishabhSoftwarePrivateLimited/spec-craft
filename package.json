@@ -1,6 +1,6 @@
 {
   "name": "@rspl/speccraft",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scaffold the Rishabh Software Private Limited spec-driven-development workflow (spec/, agent commands) into a project",
   "bin": {
     "speccraft": "bin/speccraft.js"
@@ -22,11 +22,14 @@
   "keywords": [
     "sdd",
     "spec-driven-development",
+    "spec-craft",
+    "speccraft",
+    "rspl",
+    "@rspl",
     "claude-code",
     "gemini-cli",
     "copilot",
-    "scaffold",
-    "create"
+    "scaffold"
   ],
   "repository": {
     "type": "git",

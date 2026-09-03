@@ -5,7 +5,7 @@
 [![CI](https://github.com/RishabhSoftwarePrivateLimited/spec-craft/actions/workflows/ci.yml/badge.svg)](https://github.com/RishabhSoftwarePrivateLimited/spec-craft/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/@rspl/speccraft.svg)](LICENSE)
 
-Scaffold Rishabh Software Private Limited's spec-driven-development workflow — one business spec, stage-gated through LLD, decomposition, implementation, testing, and validation — into any project, with your choice of agent tooling.
+**speccraft** is a CLI scaffolding tool for spec-driven development (SDD) — Rishabh Software Private Limited's stage-gated workflow that takes one business spec through LLD, decomposition, implementation, testing, and validation. Drop it into any project and pair it with the agent tooling you already use: Claude Code, Gemini CLI, or GitHub Copilot.
 
 ## Quickstart
 
@@ -16,8 +16,8 @@ npx @rspl/speccraft my-app
 ## What it does
 
 - Drops in `spec/` — the full stage-gated SDD workflow (business spec → LLD → decompose → implement → test → validate), agent-agnostic and always installed.
-- Lets you pick which agent tooling to add: **Claude**, **Gemini**, **Copilot**, and/or a plain **agent-agnostic** skills layer — install only what you use.
-- Selecting Claude or Gemini also makes their 12 commands available **globally** (`~/.claude/commands/`, `~/.gemini/commands/`) in the same run, never overwriting a command you already have.
+- Lets you pick which agent tooling to add: **Claude Code**, **Gemini CLI**, **GitHub Copilot**, and/or a plain **agent-agnostic** skills layer — install only what you use.
+- Selecting Claude Code or Gemini CLI also makes their 12 commands available **globally** (`~/.claude/commands/`, `~/.gemini/commands/`) in the same run, never overwriting a command you already have.
 - Everything is copy-once and yours: no ongoing dependency on this tool after scaffolding, and re-running it never silently clobbers existing files.
 
 ## Live Examples
