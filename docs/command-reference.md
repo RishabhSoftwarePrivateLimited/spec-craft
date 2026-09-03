@@ -20,3 +20,5 @@ The same 12 SDD workflow commands ship in 4 formats — one per agent. Selecting
 `spec/commands/*.md` is the agent-agnostic contract — the authoritative description of what each command does. The per-agent files are thin wrappers around it in that agent's native format; see each project's own `spec/AGENTS.md` for the read order.
 
 The **Agent-agnostic** option (`.agents/skills/`) ships the same 12 as reusable skill definitions, one subfolder per command, for any agent tooling without a dedicated column above.
+
+`/speccraft.orchestrate` also supports an unattended **auto mode** — `/speccraft.orchestrate auto <business-spec-file>` runs the full 13-stage workflow with no human-approval pauses at any gate; the agent reviews its own work at every stage and logs every decision (including how it resolved any `blocked` conflict) for after-the-fact audit. See `spec/commands/speccraft.orchestrate.md` § Auto Mode for exactly how review, revision, and blocked handling work without a human in the loop.
