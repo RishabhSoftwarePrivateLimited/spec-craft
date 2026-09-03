@@ -13,7 +13,7 @@ jobs:
         node: [18, 20, 22]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
@@ -23,7 +23,7 @@ jobs:
   maintainers-domain-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Every MAINTAINERS.md email must be @rishabhsoft.com
         run: |
           bad=$(grep -oE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+' MAINTAINERS.md | grep -v '@rishabhsoft\.com$' || true)
