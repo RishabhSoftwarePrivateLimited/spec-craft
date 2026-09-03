@@ -8,9 +8,12 @@ Command shape:
 
 ```text
 /speccraft.orchestrate <business-spec-file>
+/speccraft.orchestrate auto <business-spec-file>
 ```
 
 This command is the single entry point to chain the entire delivery workflow from a business spec input to validated, traced full-stack delivery output. It orchestrates both planning and execution in sequence, enforcing review gates, revision loops, and traceability at every stage, and fans one business spec out into linked frontend and backend delivery streams.
+
+The default form is **interactive mode**: every stage boundary is a human-approval gate, exactly as described throughout this document. The `auto` form is **auto mode**: the same 13 stages, same artifacts, same traceability obligations — but no stage boundary pauses for a human message. See `## Auto Mode` below for exactly how review, revision, and blocked conditions are handled without a pause. Every other section of this document describes interactive-mode gate behavior unless it explicitly says otherwise.
 
 ---
 
@@ -60,11 +63,13 @@ This command does not:
 The command requires:
 
 - one business specification file reference
+- an optional leading `auto` token selecting auto mode (see `## Auto Mode`); absent means interactive mode
 
 Accepted examples:
 
 ```text
 /speccraft.orchestrate spec/business/BUSINESS-SPEC-001.md
+/speccraft.orchestrate auto spec/business/BUSINESS-SPEC-001.md
 ```
 
 The file must be:
@@ -72,6 +77,45 @@ The file must be:
 - readable
 - in scope for the current repository work
 - strong enough to support planning LLD creation for the in-scope layer(s)
+
+A missing or unreadable business spec file ends the run with a clear error in both modes — `auto` mode's "never pause for a human" guarantee applies to workflow review gates, not to an invalid starting input.
+
+---
+
+## Auto Mode
+
+Auto mode runs every one of the 13 stages below in the same order, producing the same artifacts, under the same traceability and metrics obligations as interactive mode. The only thing auto mode changes is **who clears each review gate and whether execution pauses to do it**. It never skips a review, and it never hides a decision — it just does not wait for a human to make it.
+
+This section is the authoritative behavior for every place elsewhere in this document that says "HARD STOP", "wait for human", "pause", or "requires human approval" — read those as scoped to interactive mode; in auto mode, this section's rules apply instead.
+
+### Who reviews
+
+At every gate (Stage 3, 5, 7, 9, 11, 12), the agent itself performs the review, using the exact same Stage Review Checklist from `spec/REVIEW-AND-REVISION-POLICY.md` a human reviewer would use for that artifact type. `AI` is already a sanctioned reviewer type under that document's Allowed Reviewers section — auto mode simply uses it at every gate instead of only some. The review record is still written in full (reviewer type = `AI`), per Review Record — Minimum Fields.
+
+### Outcome: `approved`
+
+Proceed to the next stage immediately. No pause.
+
+### Outcome: `revise`
+
+The agent revises the artifact itself and re-reviews, up to **2 automatic revise-retries per stage**. If the artifact is still not clean after 2 retries, the remaining issue(s) are logged as **Accepted Issues** (Issue / Justification / Accepted By = `auto-mode-ai`) per `spec/workflows/shared/STAGE-CONTRACT.md` § Accepted Issues, and the stage proceeds with those issues visible in the artifact's review record — never silently dropped. This bounds the loop so it always terminates.
+
+### Outcome: `blocked`
+
+Does **not** stop the run. A `blocked` outcome (conflict, missing decision, contradictory requirement — see `## Failure And Block Conditions`) is handled like this instead:
+
+1. write the full Conflict Decision row (`spec/workflows/shared/SHARED-POLICIES.md` § Conflict Decision Rules) or Blocker/Decision row (§ Blocker And Decision Log Rules) — same schema, same "record before continuing" requirement as interactive mode
+2. make an explicit, reasoned resolution: prefer the higher-authority source per `spec/SPEC-HIERARCHY.md`; when authority is genuinely ambiguous, take the most conservative interpretation and say so
+3. set `Decided By` (Conflict Decisions) or `Approver` (Blocker/Decisions) to `auto-mode-ai` — a value reserved for auto-mode resolutions, alongside the existing `human-in-loop` — and fill `Resolution` / `Why` with the actual reasoning, not a placeholder
+4. set the row's `Status` to `resolved` (never left `open`)
+5. continue to the next stage
+
+A `blocked` outcome is never auto-approved without a logged reason — it is always resolved on the record first.
+
+### Run-level requirements
+
+- **Final consolidated handoff**: at the end of an auto run (whether it reaches Stage 13 or ends early on an unrecoverable input error), output one summary covering every stage's outcome, every Accepted Issue, and every auto-resolved conflict/blocker, so a human can audit the entire unattended run after the fact.
+- Metrics (`Workflow Metrics` rows) and traceability updates are required at every stage exactly as in interactive mode — auto mode changes gate-pause behavior only, nothing else.
 
 ---
 
@@ -158,7 +202,7 @@ The command executes stages in the following fixed order. Each stage must comple
 
 ### Stage 3: LLD Review Gate
 
-**HARD STOP. Do not proceed in the same execution.**
+**Interactive mode: HARD STOP. Do not proceed in the same execution.** Auto mode: no pause — resolve per `## Auto Mode` and continue.
 
 After Stage 2 produces the in-scope LLD artifact(s):
 
@@ -168,14 +212,14 @@ After Stage 2 produces the in-scope LLD artifact(s):
 - do not self-evaluate any LLD and proceed to Stage 4 in the same execution
 - do not produce tasks, write code, or take any downstream action until every in-scope LLD is explicitly approved
 
-When Layer Scope = `both`, this is one logical gate covering the pair — the human responds once for both artifacts together. When Layer Scope is single-layer, this gate covers the single artifact.
+When Layer Scope = `both`, this is one logical gate covering the pair — in interactive mode, the human responds once for both artifacts together; in auto mode, the agent reviews both artifacts together the same way. When Layer Scope is single-layer, this gate covers the single artifact.
 
-Allowed human responses:
+Allowed human responses (interactive mode):
 - `approved` — every in-scope LLD approved; proceed to Stage 4 in the next execution
 - `revise: [reason]` — return to LLD creation; under Layer Scope = `both`, a revise on one LLD does not require redoing the other, but Stage 4 does not open until both are independently approved
 - `blocked: [reason]` — stop, record blocker, require human decision before continuing
 
-The AI must not infer approval from silence or from its own review of the artifacts it just produced.
+The AI must not infer approval from silence or from its own review of the artifacts it just produced. (Auto mode: the AI's own review, performed per `## Auto Mode`, is the mechanism — that section is the one place this rule is deliberately superseded.)
 
 ### Stage 4: Decomposition
 
@@ -187,7 +231,7 @@ The AI must not infer approval from silence or from its own review of the artifa
 
 ### Stage 5: Decomposition Review Gate
 
-**HARD STOP. Do not proceed in the same execution.**
+**Interactive mode: HARD STOP. Do not proceed in the same execution.** Auto mode: no pause — resolve per `## Auto Mode` and continue.
 
 After Stage 4 decomposition task files are produced:
 
@@ -197,12 +241,12 @@ After Stage 4 decomposition task files are produced:
 - do not self-evaluate the decomposition and proceed to execution in the same execution
 - do not scaffold, write code, or take any downstream action until explicit approval is received
 
-Allowed human responses:
+Allowed human responses (interactive mode):
 - `approved` — planning complete; proceed to Stage 5.5 and execution in the next execution
 - `revise: [reason]` — return to decomposition, revise tasks, resubmit
 - `blocked: [reason]` — stop, record blocker, require human decision before continuing
 
-The AI must not infer approval from silence or from its own review of the artifacts it just produced.
+The AI must not infer approval from silence or from its own review of the artifacts it just produced. (Auto mode: see `## Auto Mode`.)
 
 ### Stage 5.5: Project Scaffold Check
 
@@ -226,8 +270,8 @@ Before any task-to-code work begins for a given layer, confirm that layer's code
 - for each implemented task:
   - submit implementation for review
   - allowed outcomes: `approved`, `revise`, `blocked`
-  - if `revise`: enter revision loop, return to review
-  - if `blocked`: report blocker, pause, require human-in-the-loop resolution
+  - if `revise`: enter revision loop, return to review (auto mode: bounded per `## Auto Mode`)
+  - if `blocked`: interactive mode — report blocker, pause, require human-in-the-loop resolution; auto mode — resolve per `## Auto Mode` and continue
   - if `approved`: proceed to Stage 8 for this task
 
 ### Stage 8: Code-To-Unit-Tests Generation
@@ -241,8 +285,8 @@ Before any task-to-code work begins for a given layer, confirm that layer's code
 - for each task's test output:
   - submit tests for review
   - allowed outcomes: `approved`, `revise`, `blocked`
-  - if `revise`: enter revision loop, return to review
-  - if `blocked`: report blocker, pause, require human-in-the-loop resolution
+  - if `revise`: enter revision loop, return to review (auto mode: bounded per `## Auto Mode`)
+  - if `blocked`: interactive mode — report blocker, pause, require human-in-the-loop resolution; auto mode — resolve per `## Auto Mode` and continue
   - if `approved`: proceed **per this task's `Layer`** — `backend` -> Stage 10; `frontend` -> skip Stage 10 and 11, proceed directly to Stage 12
 
 ### Stage 10: Integration Testing Generation — CONDITIONAL (backend-tagged tasks only)
@@ -259,8 +303,8 @@ Before any task-to-code work begins for a given layer, confirm that layer's code
 - for each task's integration test output:
   - submit tests for review
   - allowed outcomes: `approved`, `revise`, `blocked`
-  - if `revise`: enter revision loop, return to review
-  - if `blocked`: report blocker, pause, require human-in-the-loop resolution
+  - if `revise`: enter revision loop, return to review (auto mode: bounded per `## Auto Mode`)
+  - if `blocked`: interactive mode — report blocker, pause, require human-in-the-loop resolution; auto mode — resolve per `## Auto Mode` and continue
   - if `approved`: proceed to Stage 12 for this task
 
 ### Stage 12: Final Validation
@@ -321,16 +365,16 @@ Every stage boundary has a review gate. No stage may advance without an explicit
 Allowed review outcomes:
 
 - `approved`: proceed to the next stage
-- `revise`: return to the producing stage, revise, resubmit for review
-- `blocked`: stop, report the blocker, require human-in-the-loop resolution
+- `revise`: return to the producing stage, revise, resubmit for review (auto mode: bounded per `## Auto Mode`)
+- `blocked`: interactive mode — stop, report the blocker, require human-in-the-loop resolution; auto mode — resolve per `## Auto Mode` and continue
 
-The workflow may not self-approve any artifact produced in the same execution step.
+The workflow may not self-approve any artifact produced in the same execution step. (Auto mode is the documented exception — see `## Auto Mode`.)
 
 ---
 
 ## Pause Point Behavior
 
-The command must pause at every `revise` or `blocked` outcome and report the current state using the minimal handoff format below.
+**Interactive mode:** the command must pause at every `revise` or `blocked` outcome and report the current state using the minimal handoff format below.
 
 At any pause point, the agent must report:
 
@@ -340,11 +384,15 @@ At any pause point, the agent must report:
 - what must happen before the workflow can resume
 - what stages are complete and what stages remain, per layer
 
+**Auto mode:** no pause points occur. The equivalent reporting happens once, at the end of the run, in the Final Consolidated Handoff described in `## Auto Mode` — covering every stage's outcome instead of one pause point at a time.
+
 ---
 
 ## Failure And Block Conditions
 
-The command should stop and report `blocked` when:
+**Interactive mode:** the command should stop and report `blocked` when any of the conditions below are met. **Auto mode:** the same conditions still trigger `blocked` handling, but "stop" means "resolve on the record per `## Auto Mode`, then continue" rather than pausing for a human.
+
+The command should treat these as `blocked` triggers:
 
 - the business spec is too vague to support LLD creation
 - stable requirement references cannot be established
@@ -359,7 +407,7 @@ The command should stop and report `blocked` when:
 - **a new LLD conflicts with an existing approved LLD touching the same module/resource/endpoint** — append conflict row(s) to current story traceability shard before stopping
 - **`LLD-FRONTEND-<id>.md` and `LLD-BACKEND-<id>.md` for the same story contradict each other's contract** (e.g. FRONTEND assumes a request/response shape the BACKEND LLD's actual endpoint contract does not provide) — same-story cross-layer conflict, applies only when Layer Scope = `both`; blocked the same way, logged in Conflict Decisions the same way
 
-For all conflict-triggered blocks: one row per conflicting element in `spec/traceability/<mirrored-business-path>/TRACEABILITY.md` under `Conflict Decisions`, status `open`, no LLD section or code change for that area until status becomes `resolved` or `deferred`. Schema and rules: `spec/workflows/shared/SHARED-POLICIES.md`.
+For all conflict-triggered blocks: one row per conflicting element in `spec/traceability/<mirrored-business-path>/TRACEABILITY.md` under `Conflict Decisions`. Interactive mode: status `open`, no LLD section or code change for that area until status becomes `resolved` or `deferred` by a human. Auto mode: the agent resolves and sets status `resolved` in the same turn per `## Auto Mode`, then continues — status is never left `open` in auto mode. Schema and rules: `spec/workflows/shared/SHARED-POLICIES.md`.
 
 The command should report `revise` when a review gate finds issues that can be resolved by revising within the current stage.
 
@@ -377,19 +425,19 @@ Rules:
 - integration testing must not begin until unit testing is approved, and only applies to backend-tagged tasks
 - final validation must not begin until testing is approved (and, for backend tasks, integration testing is approved)
 - no earlier-phase artifact may be silently changed during a later stage
-- if an execution discovery requires a planning change, stop and escalate
-- **AI must not self-approve artifacts it produced in the same execution step**
-- **`approved` is a human-provided response, never an AI inference**
-- **Stage 3 and Stage 5 are HARD STOPS that end the current execution turn**
-- the workflow spans multiple conversation turns — each review gate requires a new human message before the next stage begins
-- proceeding past a review gate without an explicit human approval response is a workflow violation
-- a task's `Layer` field determines its code root and whether Stage 10/11 apply — commands must branch on the `Layer` field programmatically, not on the filename tag alone
+- if an execution discovery requires a planning change: interactive mode — stop and escalate; auto mode — resolve per `## Auto Mode` and continue
+- **interactive mode: AI must not self-approve artifacts it produced in the same execution step.** Auto mode is the one documented exception to this rule — see `## Auto Mode`.
+- **interactive mode: `approved` is a human-provided response, never an AI inference.** In auto mode, an AI-produced `approved` (per `## Auto Mode`'s review mechanics) is the sanctioned mechanism, not a violation of this rule.
+- **interactive mode: Stage 3 and Stage 5 are HARD STOPS that end the current execution turn.** Auto mode does not stop at either — see `## Auto Mode`.
+- interactive mode: the workflow spans multiple conversation turns — each review gate requires a new human message before the next stage begins. Auto mode runs all stages without waiting for a new human message at any gate.
+- interactive mode: proceeding past a review gate without an explicit human approval response is a workflow violation. This rule does not apply in auto mode, where the AI's own review is the approval mechanism by design.
+- a task's `Layer` field determines its code root and whether Stage 10/11 apply — commands must branch on the `Layer` field programmatically, not on the filename tag alone (applies identically in both modes)
 
 ---
 
 ## Human-In-The-Loop Triggers
 
-Human escalation is required when:
+**Interactive mode:** human escalation is required when:
 
 - any review gate produces `blocked`
 - a business source is materially contradictory or incomplete
@@ -401,6 +449,8 @@ Human escalation is required when:
 
 The agent must not self-approve corrections across phase boundaries.
 
+**Auto mode:** none of the above pause the run — every one of these conditions routes to the `blocked` handling in `## Auto Mode` (logged resolution, `Decided By = auto-mode-ai`, status `resolved`, then continue). The trade-off is deliberate: auto mode trades real-time human escalation for a fully logged, audit-after-the-fact trail via the Final Consolidated Handoff.
+
 ---
 
 ## Minimal Command Handoff
@@ -409,6 +459,7 @@ At every pause point or session end, the command must report:
 
 ```text
 Command: /speccraft.orchestrate
+Mode: <interactive|auto>
 Business Spec: <file>
 Current Phase: <1 or 2>
 Current Stage: <stage name>
@@ -420,7 +471,7 @@ Blockers Or Open Questions: <list or none>
 Next Required Action: <what must happen>
 ```
 
-This handoff format must be produced at every pause point so that any human or AI collaborator can resume the workflow without losing context.
+This handoff format must be produced at every pause point (interactive mode) or as the Final Consolidated Handoff (auto mode, see `## Auto Mode`) so that any human or AI collaborator can resume or audit the workflow without losing context.
 
 ---
 
