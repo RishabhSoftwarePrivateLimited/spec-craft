@@ -8,11 +8,9 @@ Onboarding an existing codebase instead? See [docs/brownfield-setup.md](brownfie
 
 One-time setup, done once per project, before the first `/speccraft.orchestrate` or `/speccraft.tech-design` call:
 
-1. **Answer Layer Scope** — does this project need frontend only, backend only, or both? Recorded in `spec/architecture/ARCH-DECISIONS.md`.
-2. **Lock the stack(s)** for the layer(s) in scope (framework, data layer, auth, testing, etc.) in `spec/architecture/ARCH-DECISIONS.md`.
-3. **Fill in the scaffold contract** — install commands, folder structure, env vars — in `spec/commands/speccraft.scaffold.md`.
-4. **(Optional)** add NFR enforcement in `spec/architecture/NFR-SUMMARY.md` if this project wants a hard perf/security/compliance gate.
-5. **Drop in the first business spec** at `spec/business/<module>/<STORY-ID>.md`.
+1. **Write the first business spec** at `spec/business/<module>/<STORY-ID>.md`.
+2. **Run `/speccraft.plan-foundation <business-spec-file> "<tech stack description>"`** instead of manually answering Layer Scope, locking the stack, filling in the scaffold contract, and authoring `rules/`/`skills/` content. It drafts a Layer Scope recommendation from the business spec, proposes stack decisions for `spec/architecture/ARCH-DECISIONS.md` from the stated tech stack, seeds `rules/`/`skills/` content, and fills in `spec/commands/speccraft.scaffold.md`'s placeholders — all for one combined review. Nothing is locked until you respond `approved`.
+3. **(Optional)** add NFR enforcement in `spec/architecture/NFR-SUMMARY.md` if this project wants a hard perf/security/compliance gate.
 
 ## Running the workflow
 
