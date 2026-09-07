@@ -18,7 +18,7 @@ npx @rspl/speccraft my-app
 - Drops in `spec/` — the full stage-gated SDD workflow (business spec → LLD → decompose → implement → test → validate), agent-agnostic and always installed.
 - Ships `/speccraft.orchestrate` to run that whole workflow end to end from one business spec file. Run it plain for a human-reviewed pass with an approval gate at every stage, or as `/speccraft.orchestrate auto <business-spec-file>.md` for a fully unattended run — the agent reviews and resolves every gate itself and logs each decision (including how it resolved any conflict) for you to audit afterward. See [docs/command-reference.md](docs/command-reference.md).
 - Lets you pick which agent tooling to add: **Claude Code**, **Gemini CLI**, **GitHub Copilot**, and/or a plain **agent-agnostic** skills layer — install only what you use.
-- Selecting Claude Code or Gemini CLI also makes their 12 commands available **globally** (`~/.claude/commands/`, `~/.gemini/commands/`) in the same run, never overwriting a command you already have.
+- Selecting Claude Code or Gemini CLI also makes their 13 commands available **globally** (`~/.claude/commands/`, `~/.gemini/commands/`) in the same run, never overwriting a command you already have.
 - Everything is copy-once and yours: no ongoing dependency on this tool after scaffolding, and re-running it never silently clobbers existing files.
 
 ## Live Examples

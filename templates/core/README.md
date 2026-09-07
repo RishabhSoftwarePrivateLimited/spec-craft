@@ -35,7 +35,18 @@ One-time setup, done once per project, **before** the first `/speccraft.orchestr
 | 10 | If an API contract already exists for the first story (e.g. modifying an established endpoint), reference it. If this is a brand-new operation, skip this step — the contract doesn't need to exist yet; backend implementation writes it later from the approved LLD-BACKEND touchpoint table | `contracts/<module>/<module>.yaml` (one growing file per module, not per story — reference the path when invoking `/speccraft.tech-design` or record it in both LLDs' `API Spec Ref` metadata field) |
 | 11 | Write an `## Agent Delta` section into every canonical file agents read every session (see §Agent Delta Protocol below) | Top of `spec/architecture/ARCH-DECISIONS.md`, any new file added in step 4, and `spec/architecture/NFR-SUMMARY.md` if you added it in step 6 |
 
-Only step 2 (Layer Scope), step 3, step 9, and (once step 3 is done) step 11 for `ARCH-DECISIONS.md` are strictly required to get the first `/speccraft.orchestrate` call unblocked — step 2 unblocks step 3, since you cannot lock "the stack(s) in scope" without first knowing what's in scope. `/speccraft.scaffold frontend` and `/speccraft.scaffold backend` will each stop and ask for step 5 when they run. Step 6 (NFR) is optional and has no effect on any stage if skipped — there is no NFR gate to fail. Step 1 (.gitignore prune) isn't fully actionable on day one — its lines only matter once step 5 (scaffold) or step 9 (first business spec) produce real content — but read it now and come back to it before your first real commit, otherwise `git status` will look clean while `.gitignore` is silently excluding what you just added.
+Only step 2 (Layer Scope), step 3, step 9, and (once step 3 is done) step 11 for `ARCH-DECISIONS.md` are strictly required to get the first `/speccraft.orchestrate` call unblocked — step 2 unblocks step 3, since you cannot lock "the stack(s) in scope" without first knowing what's in scope. `/speccraft.scaffold frontend` and `/speccraft.scaffold backend` will each stop and ask for step 5 when they run. Step 6 (NFR) is optional and has no effect on any stage if skipped — there is no NFR gate to fail. Step 1 (.gitignore prune) isn't fully actionable on day one — its lines only matter once step 5 (scaffold) or step 9 (first business spec) produce real content — but read it now and come back to it before your first real commit, otherwise `git status` will look clean while `.gitignore` is silently excluding what you just added. `/speccraft.plan-foundation` (see below) satisfies steps 2, 3, 4, 5, 7, 8, and the `ARCH-DECISIONS.md`/step-4-file portion of 11 in one pass, if you'd rather not do them by hand.
+
+### Greenfield Fast Path — `/speccraft.plan-foundation`
+
+The table above assumes hand-authoring every field. If you already have a business spec ready and know your tech stack, `/speccraft.plan-foundation` replaces steps 2, 3, 4, 5, 7, and 8 with one drafted-then-reviewed pass:
+
+1. Do step 1 (`.gitignore` prune) as normal.
+2. Write the first business spec at `spec/business/<module>/<STORY-ID>.md` — this is now an input to the next step, not something you drop in afterward (step 9 happens here, ahead of the rest of the table).
+3. Run `/speccraft.plan-foundation <business-spec-file> "<tech stack description>"` instead of manually doing steps 2, 3, 4, 5, 7, and 8. It drafts a Layer Scope recommendation from the business spec (step 2), proposes `ARCH-DECISIONS.md` stack rows from the stated tech stack (step 3), drafts supporting architecture spec files where the stack implies them (step 4), fills in `spec/commands/speccraft.scaffold.md`'s placeholders (step 5), and seeds `rules/`/`skills/` content (steps 7–8) — all in one combined review. Nothing is locked until you respond `approved`.
+4. Continue at step 6 (NFR, optional) if you want it, otherwise go straight to `/speccraft.orchestrate` — steps 2, 3, 4, 5, 7, 8, 9, and 11 (for `ARCH-DECISIONS.md` and any step-4 files) are already done.
+
+See `spec/commands/speccraft.plan-foundation.md` for the full command contract.
 
 ### Brownfield / Existing Codebase Path
 
@@ -333,6 +344,7 @@ All of Stages 2–5 below are shown for Layer Scope = `both` (the default illust
 | `/speccraft.change` | `/speccraft.change <CR-file> <story-id>` | Alternate planning entry for an already-approved story. Replaces stages 1–5 for that story and auto-cascades a compatible change atomically through every forward-reachable dependent | Yes — one combined gate covering the whole bundle |
 | `/speccraft.sync-swagger` | `/speccraft.sync-swagger <module>` | Optional, human-triggered. Fetches the module's configured Swagger URL (`API-CONTRACT-SOURCE.md`), converts JSON→YAML if needed, merges into `contracts/<module>/<module>.yaml`. Never part of `/speccraft.orchestrate` or any stage | No — reports a summary, human reviews |
 | `/speccraft.onboard` | `/speccraft.onboard [path]` | Brownfield-only, alternate entry to §Before You Start steps 2–3. Asks Layer Scope interactively, scans existing code, proposes `ARCH-DECISIONS.md` rows (Tier 1) and `rules`/`skills` content (Tier 2) for review. Never scaffolds, never touches `spec/business/` | Yes — after the combined Tier 1/2 review gate |
+| `/speccraft.plan-foundation` | `/speccraft.plan-foundation <business-spec-file> "<tech stack description>"` | Greenfield-only, alternate entry to §Before You Start steps 2, 3, 4, 5, 7, 8. Drafts a Layer Scope recommendation from the business spec, proposes `ARCH-DECISIONS.md` rows and supporting arch docs from the stated stack, seeds `rules`/`skills` content, and fills in `speccraft.scaffold.md`'s placeholders. Never scaffolds, never touches `spec/business/` | Yes — after the combined review gate |
 | `/speccraft.tech-debt` | `/speccraft.tech-debt frontend \| backend` | Optional, human-triggered. Read-only report on existing code health (dependencies, deprecated patterns, code hygiene, test gaps, type-safety gaps, architecture drift, security-lite smells). Never part of `/speccraft.orchestrate` or any stage | No — reports a summary, human reviews |
 
 > **Review outcomes for every gate:** `approved` · `revise` · `blocked`
@@ -415,6 +427,7 @@ my-app/
 │   │   ├── speccraft.change.md      # CR command — alternate planning entry, atomic cascade
 │   │   ├── speccraft.sync-swagger.md       # Optional Swagger sync command — human-triggered only
 │   │   ├── speccraft.onboard.md  # Brownfield discovery command — alternate entry to Before You Start steps 2-3
+│   │   ├── speccraft.plan-foundation.md  # Greenfield foundation command — alternate entry to Before You Start steps 2,3,4,5,7,8
 │   │   └── speccraft.tech-debt.md     # Optional code-health report command — human-triggered only
 │   │
 │   ├── workflows/                 # Stage-specific workflow rules
@@ -496,6 +509,13 @@ Neither code root exists yet in this boilerplate. Each is created independently 
 2. Drop in the first business spec: `spec/business/<module>/<STORY-ID>.md`.
 3. `/speccraft.orchestrate spec/business/<module>/<STORY-ID>.md`
 4. Before committing this or any scaffolded code: do step 1 (prune `.gitignore`) — otherwise it silently never gets tracked.
+
+### First run on a new project — fast path
+
+1. Do step 1 (prune `.gitignore`) as normal.
+2. Write the first business spec: `spec/business/<module>/<STORY-ID>.md`.
+3. `/speccraft.plan-foundation spec/business/<module>/<STORY-ID>.md "<tech stack description>"` — replaces steps 2, 3, 4, 5, 7, 8, see [Greenfield Fast Path](#greenfield-fast-path--speccraftplan-foundation). Review and respond `approved` / `revise` / `blocked`.
+4. `/speccraft.orchestrate spec/business/<module>/<STORY-ID>.md`
 
 ### First run on an existing (brownfield) project
 
