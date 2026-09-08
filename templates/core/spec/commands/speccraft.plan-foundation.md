@@ -8,11 +8,14 @@ Command shape:
 
 ```text
 /speccraft.plan-foundation <business-spec-file> "<tech stack description>"
+/speccraft.plan-foundation auto <business-spec-file> "<tech stack description>"
 ```
 
 `<business-spec-file>` is a path to an existing file under `spec/business/<module>/<STORY-ID>.md`. `<tech stack description>` is a single free-text argument (quote it — it will almost always contain spaces), e.g. `"React + Vite frontend, Node/Express backend, Postgres via Prisma, REST API"`. There is no separate stack-spec file: the description is read once and never re-read from disk.
 
-Argument parsing: the first whitespace-delimited token is the business spec file path (repo convention never puts spaces in `spec/business/` paths); everything after it is the tech stack description, whether or not it is quoted.
+The default form is **interactive mode**: the Human Review Gate below pauses for an explicit human `approved` / `revise` / `blocked` response before anything is written, exactly as described throughout this document. The `auto` form is **auto mode**: the same five tiers of discovery, the same draft content, the same write order — but the agent clears its own review gate instead of pausing for a human. See `## Auto Mode` below for exactly how review, revision, `blocked`, and an `unclear` Layer Scope are handled without a pause. Every other section of this document describes interactive-mode gate behavior unless it explicitly says otherwise.
+
+Argument parsing: an optional leading `auto` token selects auto mode; when present it is consumed first, and the remaining tokens are parsed exactly as below. Absent means interactive mode (default). After that: the first whitespace-delimited token is the business spec file path (repo convention never puts spaces in `spec/business/` paths); everything after it is the tech stack description, whether or not it is quoted.
 
 ---
 
@@ -33,13 +36,58 @@ This command fills that gap: it drafts, from the named business spec plus a stat
 - draft Tier 2 `rules`/`skills` seed content from the named stack's known idioms — there is no code to scan, so this is convention knowledge, not discovery
 - draft Tier 3 fill-in of this project's own `spec/commands/speccraft.scaffold.md` placeholders so scaffold is immediately runnable once approved
 - draft Tier 4 supporting architecture spec files (routing/module-boundary/rendering strategy for frontend; data/integration strategy for backend) where the stated stack and Tier 1 decisions actually imply structure worth documenting
-- present the Layer Scope recommendation and all four tiers together in one combined human review gate
+- present the Layer Scope recommendation and all four tiers together in one combined review gate — a human review gate by default, or the agent's own self-review in `auto` mode (see `## Auto Mode`)
 - on approval, write everything at once
 - never scaffold, never touch `spec/business/`, never run against a project that already has real code or already-locked stack decisions
 
 ---
 
+## Auto Mode
+
+Auto mode runs the same five tiers of discovery below, producing the same draft content, under the same Hard Boundary Rules as interactive mode. The only thing auto mode changes is **who clears the Human Review Gate, how an `unclear` Layer Scope is resolved, and whether execution pauses to do either** — it never skips a tier, and it never hides a decision.
+
+This section is the authoritative behavior for every place elsewhere in this document that says "human review gate", "present for confirmation", "the human's response", "STOP", or "human must confirm" — read those as scoped to interactive mode; in auto mode, this section's rules apply instead.
+
+### Resolving an `unclear` Layer Scope
+
+Tier 0 may mark one layer `unclear — human must confirm` when the BRD gives no usable signal for it (see Tier 0). Interactive mode leaves that to the human; auto mode cannot pause, so it resolves deterministically instead:
+
+- **One layer unclear, the other has a usable signal:** exclude the unclear layer from the run — draft Tier 1 through Tier 4 for the signaled layer only. Drafting the unclear layer anyway would mean inventing structure the BRD never described, which Non-Goals already forbids; excluding it is the conservative choice, consistent with the Unstated-Field Rule's bias toward the smallest defensible footprint.
+- **Both layers unclear (the BRD gives no usable signal at all):** this is not a scope question the agent can resolve by guessing — there is nothing to draft. Treat it the same as a missing/unreadable business spec input error (see Pre-Execution Checks): stop, report why, and ask for either a clearer BRD or an explicit Layer Scope in chat. This is the one case where auto mode still stops — because there is no draft to review in the first place, not because a review gate needs a human.
+
+State which of these applied, if either, in the Final Handoff.
+
+### Who reviews the Human Review Gate
+
+The agent itself performs the review, applying the same criteria a human reviewer would: Tier 1 completeness against the confirmed layer(s), correct `Source` tagging (in particular that every `stack-convention` row genuinely follows the Unstated-Field Rule's fixed order rather than an arbitrary guess), Tier 3 mechanically matching the approved Tier 1 rows, and Tier 4 files written only where the stated stack or Tier 1 decisions actually imply structure worth documenting. This command writes no traceability/progress artifact in either mode, so there is no separate review-record file — the outcome and reasoning are stated in the Final Handoff instead.
+
+### Outcome: `approved`
+
+Write immediately, in the order given under Human Review Gate. No pause.
+
+### Outcome: `revise`
+
+The agent redrafts the affected tier(s) itself and re-reviews, up to **2 automatic revise-retries**. If a concern remains after 2 retries, it is not silently dropped: record it as an `## Auto Mode — Open Concerns` note appended to the affected file(s) (`ARCH-DECISIONS.md`'s `## Agent Delta`, or the relevant Tier 4 file) stating what the concern is and why the agent proceeded anyway, then write as normal. This bounds the loop so it always terminates.
+
+### Outcome: `blocked`
+
+Reserved, per Failure And Block Conditions, for a stated stack description that asserts two mutually exclusive values for the same required Tier 1 field — a genuine self-contradiction, not just an unstated field. Auto mode does not pause to ask for clarification:
+
+1. resolve the field using the same conservative bias as Unstated-Field Rule steps 3–4 (prefer the minimal/no-dependency option if either conflicting value is minimal; otherwise prefer whichever value was stated first in the description)
+2. tag that row's `Source` column `auto-mode-resolved` (not `stated-stack` — the description did name values, but two contradictory ones, so it does not earn the ordinary stated-stack tag) and use the Notes column to state both conflicting values found and which one was kept and why
+3. continue drafting the remaining tiers normally
+
+A `blocked` outcome is never resolved without that Notes-column reasoning — it is always resolved on the record, just not on a separate traceability file, since this command keeps none.
+
+### Final Handoff
+
+At the end of an auto run — whether it completes normally or stops early because both layers were unclear (see above) — output the same Minimal Command Handoff block as interactive mode, with `Mode: auto` and the auto-only fields filled in, so a human can audit the unattended draft after the fact even though it has already been written.
+
+---
+
 ## Pre-Execution Checks
+
+A missing/unreadable business spec file, a missing tech stack description, or "both layers unclear" (see `## Auto Mode`) end the run with a clear error in both modes — auto mode's no-pause guarantee applies to the Human Review Gate, not to invalid or insufficient starting input.
 
 0. confirm no real application code already exists for the layer(s) this BRD likely touches — check `src-code-frontend/` and `src-code-backend/` first; if either contains real source (not just boilerplate placeholders), this is not a greenfield project — stop and recommend `/speccraft.onboard [path]` instead, regardless of what `ARCH-DECISIONS.md` currently contains. This check runs before check 1 because existing code is the more specific signal — a project can have locked-but-unscaffolded decisions and still be genuinely greenfield, but it cannot have real running code and still be greenfield.
 1. confirm `spec/architecture/ARCH-DECISIONS.md` does not already have real `AD-FRONTEND-*`/`AD-BACKEND-*` content — if it does (and check 0 found no code, i.e. decisions were locked but never scaffolded), this command refuses: it is a first-time foundation tool, not a re-lock tool. Point the human at a manual edit of `ARCH-DECISIONS.md` for the specific field that needs to change — `/speccraft.change` is a story-level Change Request mechanism for already-approved LLDs, not an architecture re-lock tool; do not point to it for this case.
@@ -52,7 +100,7 @@ This command fills that gap: it drafts, from the named business spec plus a stat
 
 ### Tier 0 — Layer Scope recommendation
 
-Read the business spec's Summary, Scope, Requirements, and Acceptance Criteria sections. Look for frontend signals (form, screen, page, UI, list view, "user sees/enters/clicks") versus backend signals (API, endpoint, persistence, server-assigned, database, "server is the source of truth"). Draft a Layer Scope recommendation (`frontend` / `backend` / `both`) with one line of rationale citing which BRD language drove it (e.g. "BRD describes both a submission form and a server-assigned identifier — recommend `both`"). This is a recommendation, not a silent inference — see Human Review Gate. If the BRD gives no usable signal either way for one layer (e.g. a pure data-migration story with no UI language and no explicit backend language), mark that layer `unclear — human must confirm` in the draft rather than defaulting it in either direction.
+Read the business spec's Summary, Scope, Requirements, and Acceptance Criteria sections. Look for frontend signals (form, screen, page, UI, list view, "user sees/enters/clicks") versus backend signals (API, endpoint, persistence, server-assigned, database, "server is the source of truth"). Draft a Layer Scope recommendation (`frontend` / `backend` / `both`) with one line of rationale citing which BRD language drove it (e.g. "BRD describes both a submission form and a server-assigned identifier — recommend `both`"). This is a recommendation, not a silent inference — see Human Review Gate. If the BRD gives no usable signal either way for one layer (e.g. a pure data-migration story with no UI language and no explicit backend language), mark that layer `unclear — human must confirm` in the draft rather than defaulting it in either direction. (Auto mode: see `## Auto Mode` for how `unclear` is resolved without a human confirming it.)
 
 ### Tier 1 — LLD-required stack decisions → `spec/architecture/ARCH-DECISIONS.md` only
 
@@ -68,6 +116,7 @@ Each row carries a `Source` column instead of onboard's `Evidence` column, since
 - `Source: BRD` — the row's value follows directly from something the business spec states or implies (e.g. "no auth" because the BRD's Non-Goals explicitly excludes authentication)
 - `Source: stated-stack` — the value was named explicitly in the `<tech stack description>` argument
 - `Source: stack-convention` — the description didn't name this field explicitly; drafted per the Unstated-Field Rule below. Rows sourced this way are the ones most likely to need a `revise`, and must be visually grouped or flagged as such in the presented draft — they are proposed defaults, not restated facts.
+- `Source: auto-mode-resolved` — auto mode only (see `## Auto Mode`); the description named two mutually exclusive values for this field and the agent resolved the contradiction itself rather than pausing to ask. Always carries a Notes-column explanation of both conflicting values and which was kept and why.
 
 **Unstated-Field Rule — deterministic, not a judgment call made fresh each run:** a required Tier 1 field the stack description never names is *always* drafted, never silently skipped. Which value to draft is decided by this fixed order, so the same input produces the same draft every run:
 
@@ -104,11 +153,13 @@ Each drafted file gets its own `## Agent Delta` section (this is the step-4-file
 
 ## Human Review Gate
 
-Present the Tier 0 Layer Scope recommendation, Tier 1 rows, Tier 2 seed drafts, Tier 3 scaffold fill-in, and any Tier 4 files together as one combined review — same single-pass principle as onboard, extended to include the Layer Scope recommendation itself instead of gating it separately beforehand.
+**Interactive mode.** Auto mode does not pause here — see `## Auto Mode`.
+
+Present the Tier 0 Layer Scope recommendation, Tier 1 rows, Tier 2 seed drafts, Tier 3 scaffold fill-in, and any Tier 4 files together as one combined review — same single-pass principle as onboard, extended to include the Layer Scope recommendation itself instead of gating it separately beforehand. (Auto mode: the agent performs this same combined review itself, per `## Auto Mode`.)
 
 Respond with: `approved` / `revise: [reason]` / `blocked: [reason]` — same vocabulary as every other gate in this workflow (`spec/workflows/shared/SHARED-POLICIES.md`).
 
-If the human's response changes the Layer Scope recommendation (confirms a different value than drafted), redraft Tier 1 through Tier 4 for the corrected layer set before re-presenting — do not write a stale draft for a layer the human just excluded, or skip a layer the human just added.
+If the human's response changes the Layer Scope recommendation (confirms a different value than drafted), redraft Tier 1 through Tier 4 for the corrected layer set before re-presenting — do not write a stale draft for a layer the human just excluded, or skip a layer the human just added. (Auto mode: the equivalent Layer Scope resolution happens per `## Auto Mode`, before any tier is drafted, not as a re-presentation loop.)
 
 Only on `approved` does the agent write, in this order:
 1. `ARCH-DECISIONS.md`: `## Agent Delta`, `## Layer Scope`, the confirmed `AD-FRONTEND-*`/`AD-BACKEND-*`/`AD-X-*` rows
@@ -116,7 +167,7 @@ Only on `approved` does the agent write, in this order:
 3. `spec/commands/speccraft.scaffold.md`'s placeholder sections, per confirmed layer
 4. any Tier 4 supporting architecture spec files, plus their `spec/ARCHITECTURE-REFERENCES.md` rows
 
-Nothing is locked before this gate passes. The agent cannot self-approve.
+Nothing is locked before this gate passes. The agent cannot self-approve. (Auto mode is the documented exception — see `## Auto Mode`.)
 
 ---
 
@@ -126,15 +177,17 @@ This command must not:
 
 - write any feature code, `src-code-frontend/`, or `src-code-backend/` — it never scaffolds
 - write to `spec/business/` — the business spec is read-only input
-- write to `ARCH-DECISIONS.md`, the `rules-seed/` staging tree, `speccraft.scaffold.md`, or any Tier 4 file before the human review gate returns `approved`
+- write to `ARCH-DECISIONS.md`, the `rules-seed/` staging tree, `speccraft.scaffold.md`, or any Tier 4 file before the review gate returns `approved` (interactive mode: a human `approved`; auto mode: the agent's own `approved` outcome per `## Auto Mode`)
 - run if real application code already exists (Pre-Execution Check 0)
 - run if `ARCH-DECISIONS.md` already has real `AD-FRONTEND-*`/`AD-BACKEND-*` content (Pre-Execution Check 1)
-- silently default a Layer Scope recommendation the BRD gives no usable signal for — mark it `unclear` and let the human decide at the gate
+- silently default a Layer Scope recommendation the BRD gives no usable signal for — interactive mode: mark it `unclear` and let the human decide at the gate; auto mode: resolve it per `## Auto Mode`'s deterministic rule and state the resolution in the Final Handoff — "silently" is the forbidden part, not "without pausing"
 - draft `spec/architecture/NFR-SUMMARY.md` content or an API contract reference — both stay out of scope for this command (see Non-Goals)
 
 ---
 
 ## Failure And Block Conditions
+
+**Interactive mode:**
 
 - real application code already exists for a layer this BRD likely touches — refuse, point to `/speccraft.onboard [path]`
 - `spec/architecture/ARCH-DECISIONS.md` already has real `AD-FRONTEND-*`/`AD-BACKEND-*` content and no code exists — refuse, point to manual edit
@@ -143,6 +196,13 @@ This command must not:
 - stated stack description asserts two mutually exclusive values for the same required Tier 1 field (genuine self-contradiction, not just an unstated field) — `blocked: [reason]`, ask for clarification
 - BRD gives no usable Layer Scope signal for one layer — mark `unclear`, let the human decide, do not default
 - human responds `revise` — redraft the affected tier(s) and re-present; do not partially apply an unapproved draft
+
+**Auto mode** (see `## Auto Mode` for the full mechanics):
+
+- real application code already exists, or `ARCH-DECISIONS.md` already has real content, or the business spec is missing/unreadable, or the tech stack description is omitted — refuse/stop identically to interactive mode; these are invalid-input conditions, not review-gate outcomes, so auto mode's no-pause guarantee does not apply to them
+- stated stack description asserts two mutually exclusive values for the same required Tier 1 field — resolved and logged as `Source: auto-mode-resolved`, not asked about; run continues
+- BRD gives no usable Layer Scope signal for one layer — excluded from the run if the sibling layer has a signal; if neither layer has a signal, the run stops the same way as a missing business spec (nothing to draft)
+- the agent's own review of its draft finds an issue — redrafted and re-reviewed, bounded to 2 automatic retries, per `## Auto Mode`
 
 ---
 
@@ -175,13 +235,17 @@ This command does not invoke `/speccraft.scaffold` and does not create either co
 
 ```text
 Command: /speccraft.plan-foundation <business-spec-file> "<tech stack description>"
+Mode: interactive / auto
 Layer Scope Recommended: frontend / backend / both / unclear (per layer)
 Layer Scope Confirmed: frontend / backend / both
-Tier 1 Draft Rows Proposed: <count> (stated-stack: <n>, stack-convention: <n>, BRD: <n>)
+Layer Scope Auto-Resolution: n/a (interactive) / excluded <layer> / stopped — both layers unclear (auto only)
+Tier 1 Draft Rows Proposed: <count> (stated-stack: <n>, stack-convention: <n>, BRD: <n>, auto-mode-resolved: <n>)
 Tier 2 Seed Entries Proposed: <count>
 Tier 3 Scaffold Sections Filled: Required Stack / Required Folder Structure / .env.example / Config File Requirements
 Tier 4 Architecture Files Proposed: <count> (per layer, may be zero)
 Review Outcome: approved / revise / blocked
+Auto Mode Revise-Retries Used: n/a (interactive) / <count, 0-2> (auto only)
+Auto Mode Open Concerns Logged: n/a (interactive) / yes / no (auto only)
 ARCH-DECISIONS.md Written: yes / no
 rules-seed/ Staged: yes / no
 speccraft.scaffold.md Placeholders Filled: yes / no
@@ -194,12 +258,17 @@ Next Recommended Action:
 
 ## Exit Behavior
 
-After a run completes:
+**Interactive mode.** After a run completes:
 
 1. output the minimal handoff block above
 2. STOP — do not proceed to `/speccraft.scaffold` or any planning stage until the human confirms the written `ARCH-DECISIONS.md`, staged `rules-seed/`, filled `speccraft.scaffold.md` sections, and any Tier 4 files are acceptable
 
-No traceability or progress artifact is written by this command — unlike onboard, scaffold, and the orchestrate-chained stages, which track per-story workflow metrics, this is a one-time, pre-story foundation-setup step with nothing to track against a story.
+**Auto mode.** The write (or the early stop for "both layers unclear") already happened before this output — there is no pending human confirmation to wait for, since the draft was reviewed and approved by the agent itself per `## Auto Mode`. After a run completes:
+
+1. output the Final Handoff (the same minimal handoff block above, with `Mode: auto` and its auto-only fields filled in)
+2. STOP regardless — auto mode never chains into `/speccraft.scaffold` or any planning stage on its own, same as interactive mode; the human's role shifts from pre-write approval to post-write audit
+
+No traceability or progress artifact is written by this command in either mode — unlike onboard, scaffold, and the orchestrate-chained stages, which track per-story workflow metrics, this is a one-time, pre-story foundation-setup step with nothing to track against a story. Auto mode's resolutions are recorded inline in the written files themselves (`Source: auto-mode-resolved` rows, `## Auto Mode — Open Concerns` notes) and in the Final Handoff, not in a separate log.
 
 Running once per project is expected — same one-time-per-project spirit as steps 2–3/4/5/7–8 of root `README.md` §Before You Start, which this command replaces.
 

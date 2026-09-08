@@ -1,6 +1,6 @@
 {
   "name": "@rspl/speccraft",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Scaffold a stage-gated spec-driven-development workflow (BRD → LLD → decompose → implement → test → validate) into a project, with guided greenfield/brownfield setup and Claude Code, Gemini CLI, and GitHub Copilot command support",
   "author": "Rishabh Software Private Limited",
   "bin": {

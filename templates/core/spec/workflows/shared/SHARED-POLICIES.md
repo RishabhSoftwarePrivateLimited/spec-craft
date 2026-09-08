@@ -58,10 +58,11 @@ Applies at every stage gate:
 - Implementation Review Gate — AI stops after producing implementation
 - Testing Review Gate — AI stops after producing unit tests
 - Integration Testing Review Gate — AI stops after producing integration tests (backend-tagged tasks only; frontend-tagged tasks do not pass through this gate)
+- Foundation Review Gate — `/speccraft.plan-foundation`'s single combined Human Review Gate (Layer Scope + all four discovery tiers); AI stops after producing the draft
 
 Silence is not approval. A well-structured artifact is not approval.
 
-**Sanctioned exception:** `/speccraft.orchestrate auto <business-spec-file>` (auto mode) is the one command invocation permitted to clear every gate above without a human message — governed entirely by that command's own `## Auto Mode` section, not by an exception carved into this rule. It still writes a full review record and, for `revise`/`blocked` outcomes, a logged rationale (see `Decided By` / `Approver` = `auto-mode-ai` below) — it removes the pause, not the review.
+**Sanctioned exception:** `/speccraft.orchestrate auto <business-spec-file>` and `/speccraft.plan-foundation auto <business-spec-file> "<tech stack description>"` (each command's own auto mode) are the only invocations permitted to clear a gate above without a human message — each governed entirely by that command's own `## Auto Mode` section, not by an exception carved into this rule. Both still write a full review record and, for `revise`/`blocked` outcomes, a logged rationale (`Decided By` / `Approver` = `auto-mode-ai` for orchestrate, `Source: auto-mode-resolved` rows plus inline `Open Concerns` notes for plan-foundation, which keeps no separate traceability file) — auto mode removes the pause, not the review.
 
 ---
 

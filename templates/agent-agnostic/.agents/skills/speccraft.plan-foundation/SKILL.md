@@ -1,12 +1,12 @@
 ---
 name: speccraft.plan-foundation
-description: Bootstrap a greenfield project's architecture foundation (ARCH-DECISIONS.md, rules/skills seeds, scaffold contract, supporting architecture docs) from a business spec and a stated tech stack. Use when user runs $speccraft.plan-foundation or wants to set up a brand-new project's stack decisions from a BRD instead of hand-authoring them.
+description: Bootstrap a greenfield project's architecture foundation (ARCH-DECISIONS.md, rules/skills seeds, scaffold contract, supporting architecture docs) from a business spec and a stated tech stack. Use when user runs $speccraft.plan-foundation or wants to set up a brand-new project's stack decisions from a BRD instead of hand-authoring them. Supports an "auto" mode that runs unattended, with no human approval gate.
 ---
 Read `spec/commands/speccraft.plan-foundation.md`, `spec/AGENTS.md`, and `spec/architecture/README.md` in full, then bootstrap this greenfield project's architecture foundation from the input.
 
-Input: read the business spec file path and the quoted tech stack description the user supplied after invoking this skill (e.g. `spec/business/checkout/STORY-042.md "React + Vite frontend, Node/Express backend, Postgres via Prisma, REST API"`).
+Input: read the arguments the user supplied after invoking this skill as an optional leading `auto` token, then the business spec file path, then the quoted tech stack description (e.g. `spec/business/checkout/STORY-042.md "React + Vite frontend, Node/Express backend, Postgres via Prisma, REST API"` or `auto spec/business/checkout/STORY-042.md "..."`). `auto` present -> auto mode; absent -> interactive mode (default).
 
-Rules before starting:
+Rules before starting (interactive mode):
 - confirm no real application code already exists for the layer(s) this BRD likely touches — if it does, stop and point to `/speccraft.onboard [path]` instead
 - confirm `spec/architecture/ARCH-DECISIONS.md` does not already have real `AD-FRONTEND-*`/`AD-BACKEND-*` content — if it does, stop and point to a manual edit; this command does not re-lock an already-populated file
 - confirm both arguments are present — do not draft from the BRD alone if the stack description is missing
@@ -16,4 +16,10 @@ Rules before starting:
 - present Layer Scope + all four tiers together for one combined review; only write on `approved` — respond `approved` / `revise: [reason]` / `blocked: [reason]`
 - report the minimal handoff block from `spec/commands/speccraft.plan-foundation.md`, then STOP — do not chain into `/speccraft.scaffold` or any planning stage; no traceability/progress file is written by this command
 
-The canonical contract documents the full `/speccraft.plan-foundation <business-spec-file> "<tech stack description>"` signature and the exact `Source` column and staging-folder conventions.
+Rules before starting (auto mode — `auto` token present):
+- same confirmations, same required arguments, and same discovery (Tier 0 through Tier 4) as interactive mode above
+- do not pause for a Layer Scope confirmation or the combined review gate — apply `spec/commands/speccraft.plan-foundation.md` § Auto Mode instead: an `unclear` Layer Scope is resolved deterministically (excluded if the sibling layer has a signal; the run stops if neither layer does), the agent self-reviews its own draft against the same criteria a human would, `revise` issues are redrafted with up to 2 automatic retries (unresolved concerns logged inline, never dropped), and a `blocked` self-contradiction is resolved and tagged `Source: auto-mode-resolved` with a Notes-column explanation instead of asked about
+- write immediately once the agent's own review reaches `approved`, in the same order as interactive mode
+- report the Final Handoff (the same minimal handoff block, `Mode: auto`) — the write has already happened by the time this is reported, so there is nothing to wait on
+
+The canonical contract documents the full `/speccraft.plan-foundation <business-spec-file> "<tech stack description>"` and `/speccraft.plan-foundation auto <business-spec-file> "<tech stack description>"` signatures, the exact `Source` column (including `auto-mode-resolved`), and staging-folder conventions.

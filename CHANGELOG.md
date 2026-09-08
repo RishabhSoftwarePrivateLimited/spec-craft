@@ -1,5 +1,11 @@
 # speccraft
 
+## 0.3.0
+
+### Minor Changes
+
+- Add an `auto` mode to `/speccraft.plan-foundation` (`/speccraft.plan-foundation auto <business-spec-file> "<tech stack description>"`) that drafts and writes the greenfield architecture foundation unattended: the agent clears its own combined review gate, resolves an `unclear` Layer Scope deterministically, redrafts within a bounded retry count on its own `revise` findings, and resolves a contradictory stated stack description itself (logged as `Source: auto-mode-resolved`) instead of pausing for a human. Updated across the canonical command contract, `SHARED-POLICIES.md`, all four per-agent command wrappers, `docs/command-reference.md`, and `README.md`.
+
 ## 0.2.0
 
 ### Minor Changes
