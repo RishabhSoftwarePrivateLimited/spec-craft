@@ -1,5 +1,12 @@
 # speccraft
 
+## 0.4.0
+
+### Minor Changes
+
+- Fix `/speccraft.orchestrate auto` hanging at stage boundaries: `speccraft.tech-design.md`, `speccraft.decompose.md`, `speccraft.implement.md`, `speccraft.unit-test.md`, `speccraft.integration-test.md`, and `speccraft.validate.md` each previously carried an unconditional `STOP` / "wait for human response" instruction with no awareness of `auto` mode, so orchestrate's own `## Auto Mode` override — scoped only to text inside `orchestrate.md` itself — never reached them. An unattended orchestrate run would stall the first time it invoked one of these commands' behavior (LLD creation, at Stage 2/3).
+- Add an `## Auto Mode` section to each of the six commands above, plus standalone `/speccraft.<command> auto ...` support matching `/speccraft.plan-foundation auto`: the agent self-reviews the artifact it just produced, `revise` findings get up to 2 bounded automatic retries (unresolved concerns logged as Accepted Issues), and `blocked` conflicts are resolved and logged (`Decided By` / `Approver` = `auto-mode-ai`) instead of escalated. Each section applies both to standalone `auto` invocation and to invocation via `/speccraft.orchestrate auto` for the corresponding stage. Auto mode does not add auto-chaining between commands when invoked standalone — only `/speccraft.orchestrate` chains stages, in either mode. Updated across all six canonical command contracts, `SHARED-POLICIES.md`'s sanctioned-exception clause, a clarifying note in `speccraft.orchestrate.md`, all 24 per-agent command wrappers, `docs/command-reference.md`, and `README.md`.
+
 ## 0.3.0
 
 ### Minor Changes

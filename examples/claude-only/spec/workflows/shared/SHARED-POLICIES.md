@@ -58,8 +58,24 @@ Applies at every stage gate:
 - Implementation Review Gate — AI stops after producing implementation
 - Testing Review Gate — AI stops after producing unit tests
 - Integration Testing Review Gate — AI stops after producing integration tests (backend-tagged tasks only; frontend-tagged tasks do not pass through this gate)
+- Foundation Review Gate — `/speccraft.plan-foundation`'s single combined Human Review Gate (Layer Scope + all four discovery tiers); AI stops after producing the draft
 
 Silence is not approval. A well-structured artifact is not approval.
+
+**Sanctioned exception:** the following are the only invocations permitted to clear a gate above without a human message — each governed entirely by that command's own `## Auto Mode` section, not by an exception carved into this rule:
+
+- `/speccraft.orchestrate auto <business-spec-file>`
+- `/speccraft.plan-foundation auto <business-spec-file> "<tech stack description>"`
+- `/speccraft.tech-design auto <business-spec-file>`
+- `/speccraft.decompose auto <lld-fe-file> <lld-be-file>` / `/speccraft.decompose auto <lld-file>`
+- `/speccraft.implement auto <task-id>`
+- `/speccraft.unit-test auto <task-id>`
+- `/speccraft.integration-test auto <task-id>`
+- `/speccraft.validate auto <task-id>`
+
+The last six also apply — via the same `## Auto Mode` section in each of their own command contracts, not via any override text in `speccraft.orchestrate.md` — when `/speccraft.orchestrate auto` invokes their behavior for its own Stage 2 through Stage 12; orchestrate does not carry gate-clearing logic for these six stages on their behalf.
+
+All sanctioned auto-mode invocations still write a full review record and, for `revise`/`blocked` outcomes, a logged rationale (`Decided By` / `Approver` = `auto-mode-ai`, or `Source: auto-mode-resolved` rows plus inline `Open Concerns` notes for plan-foundation, which keeps no separate traceability file) — auto mode removes the pause, not the review.
 
 ---
 
@@ -276,22 +292,22 @@ One row per conflict element. If one stop surfaces three conflicts, write three 
 | Source B | Second conflicting source — reference + specific claim |
 | Conflicting Element | What specifically differs |
 | Status | `open` · `resolved` · `deferred` |
-| Resolution | Human decision — which source wins, or compromise made |
-| Decided By | Human name, role, or `human-in-loop` |
+| Resolution | Human decision — which source wins, or compromise made — or, when `Decided By = auto-mode-ai`, the AI's reasoned resolution per `speccraft.orchestrate.md` § Auto Mode |
+| Decided By | Human name, role, `human-in-loop`, or `auto-mode-ai` (auto-mode runs only — see `speccraft.orchestrate.md` § Auto Mode; requires a real `Resolution`, never a placeholder) |
 | Recorded By | AI model that detected and logged it |
 | Unblocks | Stage/task/LLD section that can now proceed |
 
 ### Status Values
 
-- `open` — conflict detected, hard stop in effect, human has not responded
-- `resolved` — human provided explicit decision, work may continue
-- `deferred` — human acknowledged conflict, agreed to defer; current story may continue with scope reduced
+- `open` — conflict detected, hard stop in effect, human has not responded (interactive mode only — an auto-mode run never leaves a row `open`, see below)
+- `resolved` — explicit decision provided, work may continue — by a human (`Decided By = human-in-loop` or a name/role), or by the AI in an auto-mode run (`Decided By = auto-mode-ai`)
+- `deferred` — human acknowledged conflict, agreed to defer; current story may continue with scope reduced (interactive mode only — auto mode always resolves rather than deferring, since deferring still implies a later human decision)
 
 ### Rules
 
 **Always record before continuing.** No LLD section, no task, no code change for any area covered by an `open` conflict row.
 
-**Do not self-resolve.** AI may identify, propose options, and write the row — but Status must stay `open` until human responds.
+**Do not self-resolve — interactive mode.** AI may identify, propose options, and write the row — but Status must stay `open` until human responds. **Auto mode is the documented exception:** the AI resolves and sets Status to `resolved` (`Decided By = auto-mode-ai`) in the same turn, per `speccraft.orchestrate.md` § Auto Mode — never for any other command or mode.
 
 **Rows are immutable.** Never overwrite. If resolution changes, append a new row `DEC-<previous>-R1`.
 
@@ -394,9 +410,9 @@ Under `## Task: TASK-{id}` → `### Blockers` in `spec/progress/<module>/progres
 | Description | What is blocked |
 | Source | What caused the blocker |
 | Resolution Required | What must happen to unblock |
-| Status | `open` · `resolved` |
+| Status | `open` · `resolved` (auto-mode runs resolve in the same turn — see `speccraft.orchestrate.md` § Auto Mode) |
 | Resolution Date | YYYY-MM-DD |
-| Resolution Notes | |
+| Resolution Notes | For an auto-mode resolution, state the reasoning — same requirement as a human resolution note |
 
 ### Decisions Schema
 
@@ -409,6 +425,6 @@ Under `## Task: TASK-{id}` → `### Decisions` in `spec/progress/<module>/progre
 | Decision | The decision itself |
 | Why | Reasoning |
 | Alternatives Considered | Options rejected and why |
-| Approver | Human name, role, or `human-in-loop` |
+| Approver | Human name, role, `human-in-loop`, or `auto-mode-ai` (auto-mode runs only — see `speccraft.orchestrate.md` § Auto Mode) |
 | Date | YYYY-MM-DD |
 

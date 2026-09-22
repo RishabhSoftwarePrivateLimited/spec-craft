@@ -1,6 +1,7 @@
 # speccraft.tech-design.md
 
 Command: `/speccraft.tech-design <business-spec-file>`
+Auto mode: `/speccraft.tech-design auto <business-spec-file>` (see `## Auto Mode`)
 
 Starts or continues planning LLD creation for a single business spec input. Produces one LLD artifact per in-scope layer — per this project's Layer Scope (`spec/architecture/ARCH-DECISIONS.md` §Layer Scope) — linked as companions only when Layer Scope is `both`.
 
@@ -24,6 +25,8 @@ Does not: decompose into tasks, write code, write tests, edit the business spec.
 ## Required Input
 
 One business spec file reference. File must be readable, in scope, and strong enough to support planning design for the in-scope layer(s).
+
+An optional leading `auto` token selects auto mode (see `## Auto Mode`); absent means interactive mode.
 
 ---
 
@@ -111,17 +114,53 @@ When Layer Scope = `both`, a `revise` on one LLD does not require redoing the ot
 
 ---
 
+## Auto Mode
+
+Auto mode produces the same in-scope LLD artifact(s) under the same Pre-Execution Checks, Expected Behavior, and Failure & Block Conditions as interactive mode. The only thing it changes is **who clears the Exit Behavior review gate, and whether execution pauses to do it**.
+
+This section is the authoritative behavior for every place elsewhere in this document that says "HARD STOP" or "wait for human response" — read those as scoped to interactive-mode invocation; in auto mode, this section's rules apply instead. This section applies whenever this command's behavior runs in auto mode: invoked directly as `/speccraft.tech-design auto <business-spec-file>`, or invoked by `/speccraft.orchestrate auto` for its Stage 2 (LLD Creation) / Stage 3 (LLD Review Gate).
+
+### Who reviews
+
+The agent itself reviews every in-scope LLD it just produced, using the same checklist a human reviewer would apply per `spec/workflows/lld/LLD-STAGE.md`. The review record is still written in full (reviewer type = `AI`).
+
+### Outcome: `approved`
+
+Proceed — the in-scope LLD(s) stand as produced. No pause.
+
+### Outcome: `revise`
+
+The agent revises the affected in-scope LLD(s) itself and re-reviews, up to **2 automatic revise-retries**. If still not clean after 2 retries, log the remaining issue(s) as Accepted Issues (Issue / Justification / Accepted By = `auto-mode-ai`) per `spec/workflows/shared/STAGE-CONTRACT.md` § Accepted Issues, and proceed with those issues visible in the review record — never silently dropped.
+
+### Outcome: `blocked`
+
+Does not stop the run:
+
+1. write the full Conflict Decision row per `spec/workflows/shared/SHARED-POLICIES.md` § Conflict Decision Rules to the current story's traceability shard
+2. resolve it — prefer the higher-authority source per `spec/SPEC-HIERARCHY.md`; when authority is genuinely ambiguous, take the most conservative interpretation and say so
+3. set `Decided By` to `auto-mode-ai`, fill `Resolution` with the actual reasoning
+4. set `Status` to `resolved` (never left `open`)
+5. continue
+
+### Exit Behavior in auto mode
+
+Steps 1-4 of `## Exit Behavior` below still happen unchanged (file paths, handoff block, conflict rows, Workflow Metrics row). Step 5 does not apply. Instead:
+- standalone (`/speccraft.tech-design auto`): report the same Minimal Command Handoff with `Mode: auto`, then stop — this command still does not invoke `/speccraft.decompose` itself, even in auto mode
+- invoked by `/speccraft.orchestrate auto`: return control to that run's Stage 4; the run's own Final Consolidated Handoff covers this stage's outcome, no separate handoff needed here
+
+---
+
 ## Exit Behavior
 
-**HARD STOP after every in-scope LLD artifact is produced.**
+**Interactive mode: HARD STOP after every in-scope LLD artifact is produced. Auto mode: see `## Auto Mode`.**
 
 1. Output every in-scope LLD file path and a brief coverage summary for each, in one summary block
 2. Output minimal handoff block (command, input, phase, stage, in-scope artifact(s), state(s), requirement scope, traceability status, blockers, next action)
 3. If conflict triggered hard stop (including same-story FRONTEND/BACKEND contract mismatch, when Layer Scope = `both`) — append one row per conflict to current story traceability shard `spec/traceability/<mirrored-business-path>/TRACEABILITY.md` under `Conflict Decisions` per `spec/workflows/shared/SHARED-POLICIES.md`
 4. Append one row to current story traceability shard `spec/traceability/<mirrored-business-path>/TRACEABILITY.md` under `Workflow Metrics` per `spec/workflows/shared/SHARED-POLICIES.md`
-5. STOP — do not invoke `/speccraft.decompose`; wait for human response
+5. Interactive mode: STOP — do not invoke `/speccraft.decompose`; wait for human response. Auto mode: see `## Auto Mode` § Exit Behavior in auto mode.
 
-No in-scope LLD can be approved by the same execution that produced it.
+No in-scope LLD can be approved by the same execution that produced it (auto mode's own review, per `## Auto Mode`, is the documented exception).
 If human responds `revise: [reason]` (naming which LLD, or all of them) → revise the named LLD(s) and stop again with new handoff.
 If human responds `blocked: [reason]` → record blocker and stop.
 Decomposition (Stage 4) does not begin until every in-scope LLD is independently `approved` (both `LLD-FRONTEND-<id>.md` and `LLD-BACKEND-<id>.md`, when Layer Scope = `both`).

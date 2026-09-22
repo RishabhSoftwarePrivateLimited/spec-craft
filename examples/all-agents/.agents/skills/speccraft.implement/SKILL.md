@@ -1,12 +1,12 @@
 ---
 name: speccraft.implement
-description: Implement an approved task. Use when user runs $speccraft.implement or asks to implement an approved task file.
+description: Implement an approved task. Use when user runs $speccraft.implement or asks to implement an approved task file. Supports an "auto" mode that runs unattended, with no human approval gate.
 ---
 Read `spec/commands/speccraft.implement.md` and `spec/workflows/implementation/IMPLEMENTATION-STAGE.md` in full, then implement the approved task provided.
 
-Input: read the task file path the user supplied after invoking this skill.
+Input: read the arguments the user supplied after invoking this skill as an optional leading `auto` token, then the task file path. `auto` present -> auto mode; absent -> interactive mode (default).
 
-Rules before starting:
+Rules before starting (interactive mode):
 - confirm the task file exists and its status is `approved`
 - read the task's Layer field first, then confirm the matching code root exists (src-code-frontend/ for Layer: frontend, src-code-backend/ for Layer: backend) — if not, run /speccraft.scaffold frontend or /speccraft.scaffold backend first
 - confirm the OpenAPI spec covering all API endpoints in this task is available; if missing, task is blocked
@@ -17,4 +17,10 @@ Rules before starting:
 - do not self-approve the implementation
 - wait for human approval before running /speccraft.unit-test
 
-The canonical contract now documents Layer-field routing: implementation, architecture subset, and rules subset are all selected by the task's Layer.
+Rules before starting (auto mode — `auto` token present):
+- same confirmations and same implementation as interactive mode above
+- do not pause for the Implementation Review Gate — apply `spec/commands/speccraft.implement.md` § Auto Mode instead: the agent self-reviews the implementation against the task scope and architecture decisions, `revise` findings get up to 2 automatic retries (unresolved concerns logged as Accepted Issues, never dropped), and a `blocked` conflict is resolved and logged (`Approver: auto-mode-ai`) instead of escalated
+- still do not run /speccraft.unit-test — this command does not auto-chain into the next stage even in auto mode
+- report the same minimal handoff block with `Mode: auto`, then stop
+
+The canonical contract now documents Layer-field routing: implementation, architecture subset, and rules subset are all selected by the task's Layer, plus the full `/speccraft.implement auto <task-id>` signature and § Auto Mode mechanics.

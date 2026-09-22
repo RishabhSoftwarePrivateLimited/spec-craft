@@ -1,12 +1,12 @@
 ---
 name: speccraft.unit-test
-description: Generate unit tests for an approved implementation. Use when user runs $speccraft.unit-test or asks to write unit tests for an approved task.
+description: Generate unit tests for an approved implementation. Use when user runs $speccraft.unit-test or asks to write unit tests for an approved task. Supports an "auto" mode that runs unattended, with no human approval gate.
 ---
 Read `spec/commands/speccraft.unit-test.md` and `spec/workflows/testing/TESTING-STAGE.md` in full, then generate unit tests for the approved implementation provided.
 
-Input: read the task file path the user supplied after invoking this skill.
+Input: read the arguments the user supplied after invoking this skill as an optional leading `auto` token, then the task file path. `auto` present -> auto mode; absent -> interactive mode (default).
 
-Rules before starting:
+Rules before starting (interactive mode):
 - confirm the task implementation is approved before writing tests
 - active phase must be execution
 - cover all behaviors listed in the task's "Expected Test Implications" section
@@ -17,4 +17,10 @@ Rules before starting:
 - do not self-approve the tests
 - wait for human approval before running /speccraft.validate (backend tasks route through /speccraft.integration-test first; frontend tasks go straight to /speccraft.validate)
 
-The canonical contract now documents Layer-field routing: the task's Layer selects the locked test framework and rules subset (frontend vs backend).
+Rules before starting (auto mode — `auto` token present):
+- same confirmations and same test generation as interactive mode above
+- do not pause for the Testing Review Gate — apply `spec/commands/speccraft.unit-test.md` § Auto Mode instead: the agent self-reviews the tests against the task's Expected Test Implications, `revise` findings get up to 2 automatic retries (unresolved concerns logged as Accepted Issues, never dropped), and a `blocked` conflict is resolved and logged (`Approver: auto-mode-ai`) instead of escalated
+- still do not run /speccraft.integration-test or /speccraft.validate — this command does not auto-chain into the next stage even in auto mode
+- report the same minimal handoff block with `Mode: auto`, then stop
+
+The canonical contract now documents Layer-field routing: the task's Layer selects the locked test framework and rules subset (frontend vs backend), plus the full `/speccraft.unit-test auto <task-id>` signature and § Auto Mode mechanics.

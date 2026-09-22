@@ -1,6 +1,7 @@
 # speccraft.decompose.md
 
 Command: `/speccraft.decompose <lld-fe-file> <lld-be-file>` (Layer Scope = `both`) or `/speccraft.decompose <lld-file>` (Layer Scope is single-layer)
+Auto mode: `/speccraft.decompose auto <lld-fe-file> <lld-be-file>` or `/speccraft.decompose auto <lld-file>` (see `## Auto Mode`)
 
 Starts or continues planning Decomposition for a single story's approved, in-scope LLD(s). When Layer Scope = `both`, both approved LLDs (frontend and backend) are required input, together — this is what lets cross-layer task dependencies (e.g. a BACKEND endpoint task that a FRONTEND task consumes) be expressed via the existing `Dependencies` field, even though both tasks can be coded in parallel against a mocked contract. When Layer Scope is single-layer, the single approved LLD is sufficient input on its own.
 
@@ -23,6 +24,8 @@ Does not: edit any input LLD, edit the business spec, write code, write tests, i
 ## Required Input
 
 The approved LLD file reference(s) for this story's in-scope layer(s) — `LLD-FRONTEND-<id>.md` and `LLD-BACKEND-<id>.md` together when Layer Scope = `both`, or the single relevant file otherwise. Every file provided must be readable, status `approved`, and specific enough for safe task derivation. When Layer Scope = `both`, neither LLD alone is sufficient input — both must be read together so cross-layer dependencies can be identified.
+
+An optional leading `auto` token, before the LLD file argument(s), selects auto mode (see `## Auto Mode`); absent means interactive mode.
 
 ---
 
@@ -110,16 +113,52 @@ Use `blocked` when human resolution required and revision alone cannot unblock.
 
 ---
 
+## Auto Mode
+
+Auto mode produces the same task artifacts under the same Pre-Execution Checks, Expected Behavior, and Failure & Block Conditions as interactive mode. The only thing it changes is **who clears the Exit Behavior review gate, and whether execution pauses to do it**.
+
+This section is the authoritative behavior for every place elsewhere in this document that says "HARD STOP" or "wait for human response" — read those as scoped to interactive-mode invocation; in auto mode, this section's rules apply instead. This section applies whenever this command's behavior runs in auto mode: invoked directly as `/speccraft.decompose auto ...`, or invoked by `/speccraft.orchestrate auto` for its Stage 4 (Decomposition) / Stage 5 (Decomposition Review Gate).
+
+### Who reviews
+
+The agent itself reviews the task set it just produced, using the same sizing/scope/edge-case checks plus the Review Checklist Addition above that a human reviewer would apply per `spec/workflows/decomposition/DECOMPOSITION-STAGE.md`. The review record is still written in full (reviewer type = `AI`).
+
+### Outcome: `approved`
+
+Proceed — the task set stands as produced. No pause.
+
+### Outcome: `revise`
+
+The agent revises the affected task(s) itself and re-reviews, up to **2 automatic revise-retries**. If still not clean after 2 retries, log the remaining issue(s) as Accepted Issues (Issue / Justification / Accepted By = `auto-mode-ai`) per `spec/workflows/shared/STAGE-CONTRACT.md` § Accepted Issues, and proceed with those issues visible in the review record — never silently dropped.
+
+### Outcome: `blocked`
+
+Does not stop the run:
+
+1. write the full Blocker/Decision row per `spec/workflows/shared/SHARED-POLICIES.md` § Blocker And Decision Log Rules to the current story's traceability shard
+2. resolve it — prefer the higher-authority source per `spec/SPEC-HIERARCHY.md`; when authority is genuinely ambiguous, take the most conservative interpretation and say so
+3. set `Approver` to `auto-mode-ai`, fill `Why` with the actual reasoning
+4. set `Status` to `resolved` (never left `open`)
+5. continue
+
+### Exit Behavior in auto mode
+
+Steps 1-3 of `## Exit Behavior` below still happen unchanged (task list, handoff block, Workflow Metrics row). Step 4 does not apply. Instead:
+- standalone (`/speccraft.decompose auto`): report the same Minimal Command Handoff with `Mode: auto`, then stop — this command still does not begin execution itself, even in auto mode
+- invoked by `/speccraft.orchestrate auto`: return control to that run's Stage 5.5 / Stage 6; the run's own Final Consolidated Handoff covers this stage's outcome, no separate handoff needed here
+
+---
+
 ## Exit Behavior
 
-**HARD STOP after task artifacts produced.**
+**Interactive mode: HARD STOP after task artifacts produced. Auto mode: see `## Auto Mode`.**
 
 1. Output task list (IDs, names, complexity, layer), execution order (dependency-driven, not layer-priority-driven — see `DECOMPOSITION-STAGE.md` §Task ordering), sizing rationale — every in-scope layer together
 2. Output minimal handoff block (command, in-scope LLD input(s), phase, stage, task files, task IDs, state, LLD scope covered per layer, traceability status, dependency status including cross-layer edges when Layer Scope = `both`, edge case carry-through, review need, blockers, next action)
 3. Append one row to current story traceability shard `spec/traceability/<mirrored-business-path>/TRACEABILITY.md` under `Workflow Metrics` per `spec/workflows/shared/SHARED-POLICIES.md`
-4. STOP — do not begin execution; wait for human response
+4. Interactive mode: STOP — do not begin execution; wait for human response. Auto mode: see `## Auto Mode` § Exit Behavior in auto mode.
 
-execution begins only after explicit human approval of decomposition output.
+execution begins only after explicit human approval of decomposition output (auto mode's own review, per `## Auto Mode`, is the documented exception).
 Decomposition cannot be approved by the same execution that produced it.
 If human responds `revise: [reason]` → revise tasks and stop again with new handoff.
 If human responds `blocked: [reason]` → record blocker and stop.

@@ -8,7 +8,10 @@ Command shape:
 
 ```text
 /speccraft.validate <task-id>
+/speccraft.validate auto <task-id>
 ```
+
+An optional leading `auto` token selects auto mode (see `## Auto Mode`); absent means interactive mode.
 
 This command is intended to invoke the Final Validation stage for a single task once its implementation and tests are approved. The required tests, and the traceability chain length verified, depend on the task's `Layer`: frontend tasks use a 4-link chain (req → LLD → task → code → test); backend tasks use a 5-link chain (req → LLD → task → code → unit test → integration test).
 
@@ -300,6 +303,34 @@ Next Recommended Action:
 
 ---
 
+## Auto Mode
+
+Auto mode produces the same Validation record under the same Failure And Block Conditions and Hard Boundary Rules as interactive mode. The only thing it changes is **whether execution pauses after a `blocked` outcome**. There is no `revise` outcome to self-review here — this command is read-only, per §Done Criteria above — so auto mode has nothing to self-approve; it only changes how `blocked` is handled.
+
+This section is the authoritative behavior for every place elsewhere in this document that says "stop" (Failure And Block Conditions) or the plain `STOP` below — read those as scoped to interactive-mode invocation; in auto mode, this section's rules apply instead. This section applies whenever this command's behavior runs in auto mode: invoked directly as `/speccraft.validate auto <task-id>`, or invoked by `/speccraft.orchestrate auto` for its Stage 12 (Final Validation).
+
+### Outcome: `done`
+
+Report and continue — same as interactive mode, nothing changes.
+
+### Outcome: `blocked`
+
+Does not stop the run:
+
+1. write the full Blocker/Decision row per `spec/workflows/shared/SHARED-POLICIES.md` § Blocker And Decision Log Rules to the current story's traceability shard, naming which earlier-stage artifact the gap routes back to
+2. resolve it — prefer the higher-authority source per `spec/SPEC-HIERARCHY.md`; when authority is genuinely ambiguous, take the most conservative interpretation and say so
+3. set `Approver` to `auto-mode-ai`, fill `Why` with the actual reasoning, including which earlier stage's own `## Auto Mode` handling the gap is deferred to
+4. set `Status` to `resolved` (never left `open`)
+5. continue — the task's Final Task State remains `blocked` in the record even though the run itself does not pause
+
+### Exit Behavior in auto mode
+
+Steps 1-3 of `## Exit Behavior` below still happen unchanged (progress file path, handoff block, Workflow Metrics row). Step 4 does not apply. Instead:
+- standalone (`/speccraft.validate auto`): report the same minimal handoff block with `Mode: auto`, then stop
+- invoked by `/speccraft.orchestrate auto`: return control to that run's Stage 13; the run's own Final Consolidated Handoff covers this task's outcome, no separate handoff needed here
+
+---
+
 ## Exit Behavior
 
 After producing the Validation section:
@@ -307,7 +338,7 @@ After producing the Validation section:
 1. output the progress file path, task `Layer`, and final task state (done / blocked)
 2. output the minimal handoff block
 3. append one row to current story traceability shard `spec/traceability/<mirrored-business-path>/TRACEABILITY.md` under `Workflow Metrics` per `spec/workflows/shared/SHARED-POLICIES.md` (story ID, command = `validate`, stage = `Validation`, date, model, start/end timestamps, duration (computed), input/output tokens (actual from transcript, est. fallback), tok source, artifacts = progress file path, status = done or blocked, notes)
-4. STOP
+4. Interactive mode: STOP. Auto mode: see `## Auto Mode` § Exit Behavior in auto mode.
 
 ---
 

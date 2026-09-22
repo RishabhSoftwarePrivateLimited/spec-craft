@@ -1,6 +1,6 @@
 ﻿# Spec Version
 
-current: 0.1.0
+current: 0.4.0
 last_updated: 2026-07-21
 changed_files:
   - spec/SPEC-FOLDER-STRUCTURE.md

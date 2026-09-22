@@ -7,6 +7,7 @@ claude-only/
 │       ├── speccraft.integration-test.md
 │       ├── speccraft.onboard.md
 │       ├── speccraft.orchestrate.md
+│       ├── speccraft.plan-foundation.md
 │       ├── speccraft.scaffold.md
 │       ├── speccraft.sync-swagger.md
 │       ├── speccraft.tech-debt.md
@@ -37,6 +38,7 @@ claude-only/
     │   ├── speccraft.integration-test.md
     │   ├── speccraft.onboard.md
     │   ├── speccraft.orchestrate.md
+    │   ├── speccraft.plan-foundation.md
     │   ├── speccraft.scaffold.md
     │   ├── speccraft.sync-swagger.md
     │   ├── speccraft.tech-debt.md
