@@ -13,6 +13,8 @@ all-agents/
 │       │   └── SKILL.md
 │       ├── speccraft.orchestrate/
 │       │   └── SKILL.md
+│       ├── speccraft.plan-foundation/
+│       │   └── SKILL.md
 │       ├── speccraft.scaffold/
 │       │   └── SKILL.md
 │       ├── speccraft.sync-swagger/
@@ -33,6 +35,7 @@ all-agents/
 │       ├── speccraft.integration-test.md
 │       ├── speccraft.onboard.md
 │       ├── speccraft.orchestrate.md
+│       ├── speccraft.plan-foundation.md
 │       ├── speccraft.scaffold.md
 │       ├── speccraft.sync-swagger.md
 │       ├── speccraft.tech-debt.md
@@ -47,6 +50,7 @@ all-agents/
 │       ├── speccraft.integration-test.toml
 │       ├── speccraft.onboard.toml
 │       ├── speccraft.orchestrate.toml
+│       ├── speccraft.plan-foundation.toml
 │       ├── speccraft.scaffold.toml
 │       ├── speccraft.sync-swagger.toml
 │       ├── speccraft.tech-debt.toml
@@ -64,6 +68,7 @@ all-agents/
 │       ├── speccraft.integration-test.prompt.md
 │       ├── speccraft.onboard.prompt.md
 │       ├── speccraft.orchestrate.prompt.md
+│       ├── speccraft.plan-foundation.prompt.md
 │       ├── speccraft.scaffold.prompt.md
 │       ├── speccraft.sync-swagger.prompt.md
 │       ├── speccraft.tech-debt.prompt.md
@@ -95,6 +100,7 @@ all-agents/
     │   ├── speccraft.integration-test.md
     │   ├── speccraft.onboard.md
     │   ├── speccraft.orchestrate.md
+    │   ├── speccraft.plan-foundation.md
     │   ├── speccraft.scaffold.md
     │   ├── speccraft.sync-swagger.md
     │   ├── speccraft.tech-debt.md

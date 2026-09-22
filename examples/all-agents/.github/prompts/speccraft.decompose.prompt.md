@@ -4,9 +4,11 @@ mode: agent
 ---
 Read `spec/commands/speccraft.decompose.md` in full, then decompose the approved, in-scope LLD(s) into delivery tasks.
 
-Input: ${input:arguments:<lld-fe-file> <lld-be-file> when Layer Scope = both, or <lld-file> for single-layer}
+Input: ${input:arguments:optional leading "auto" token, then <lld-fe-file> <lld-be-file> when Layer Scope = both, or <lld-file> for single-layer}
 
-Rules before starting:
+Parse the input: an optional leading `auto` token selects auto mode (see below); consume it first if present, then parse the rest exactly as before. `auto` present -> auto mode; absent -> interactive mode (default).
+
+Rules before starting (interactive mode):
 - confirm every in-scope LLD file exists and its status is `approved`
 - confirm the argument count matches this project's Layer Scope (`spec/architecture/ARCH-DECISIONS.md` §Layer Scope)
 - active phase must be planning
@@ -18,4 +20,10 @@ Rules before starting:
 - do not self-approve the decomposition
 - wait for human approval before execution begins
 
-The canonical contract documents the dual-input signature (`/speccraft.decompose <lld-fe-file> <lld-be-file>`) for Layer Scope = both, a single-file signature for single-layer projects, and the mandatory Layer field on every emitted task.
+Rules before starting (auto mode — `auto` token present):
+- same confirmations, same required input, and same task production as interactive mode above
+- do not pause for the decomposition review gate — apply `spec/commands/speccraft.decompose.md` § Auto Mode instead: the agent self-reviews the task set against the same checklist a human reviewer would use, `revise` findings get up to 2 automatic retries (unresolved concerns logged as Accepted Issues, never dropped), and a `blocked` conflict is resolved and logged (`Approver: auto-mode-ai`) instead of escalated
+- still do not begin execution or scaffold — this command does not auto-chain into the next stage even in auto mode
+- report the same minimal handoff block with `Mode: auto`, then stop
+
+The canonical contract documents the dual-input signature (`/speccraft.decompose <lld-fe-file> <lld-be-file>`) for Layer Scope = both, a single-file signature for single-layer projects, the mandatory Layer field on every emitted task, the full `auto` signatures, and § Auto Mode mechanics.

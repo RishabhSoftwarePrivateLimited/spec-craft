@@ -1,12 +1,12 @@
 ---
 name: speccraft.orchestrate
-description: Execute master end-to-end workflow for a business spec file. Use when user runs $speccraft.orchestrate or asks to run/kick off the full workflow for a spec file.
+description: Execute master end-to-end workflow for a business spec file. Use when user runs $speccraft.orchestrate or asks to run/kick off the full workflow for a spec file. Supports an "auto" mode that runs unattended, with no human approval gates.
 ---
 Read `spec/commands/speccraft.orchestrate.md` in full, then execute the master end-to-end workflow for the business spec file provided.
 
-Input: read the business spec file path the user supplied after invoking this skill.
+Input: read the arguments the user supplied after invoking this skill as an optional leading `auto` token followed by the business spec file path. `auto` present -> auto mode; absent -> interactive mode (default).
 
-Rules before starting:
+Rules before starting (interactive mode):
 - confirm the business spec file exists and is readable
 - read all documents listed in the "Documents This Command Must Use" section of spec/commands/speccraft.orchestrate.md
 - follow the stage sequence exactly as defined
@@ -14,5 +14,10 @@ Rules before starting:
 - Stage 5 (Decomposition Review Gate) is a HARD STOP — produce tasks, output handoff, wait for human approval
 - do not self-approve any artifact produced in this execution
 - do not proceed past any review gate without explicit human approval in a new message
+
+Rules before starting (auto mode — `auto` token present):
+- same confirmations and same document read-list as interactive mode above
+- follow the stage sequence exactly as defined, but do not pause at Stage 3, Stage 5, or any other review gate — apply `spec/commands/speccraft.orchestrate.md` § Auto Mode at every gate instead (AI self-review against the same checklists, bounded revise-retries, `blocked` resolved and logged rather than paused on)
+- produce the Final Consolidated Handoff described in § Auto Mode at the end of the run
 
 The canonical contract now documents layer-aware behavior: Stage 2 produces the LLD artifact(s) for this project's Layer Scope (a linked LLD-FRONTEND/LLD-BACKEND pair when Layer Scope = both, a single artifact otherwise), Stage 4 decomposes every in-scope LLD, and Stages 10–11 (integration testing) run only for backend-tagged tasks.

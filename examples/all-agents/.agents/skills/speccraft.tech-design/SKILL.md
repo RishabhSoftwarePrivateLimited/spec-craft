@@ -1,12 +1,12 @@
 ---
 name: speccraft.tech-design
-description: Create the LLD(s) for a business spec file. Use when user runs $speccraft.tech-design or asks to produce/write the LLD for a spec file.
+description: Create the LLD(s) for a business spec file. Use when user runs $speccraft.tech-design or asks to produce/write the LLD for a spec file. Supports an "auto" mode that runs unattended, with no human approval gate.
 ---
 Read `spec/commands/speccraft.tech-design.md` in full, then create the LLD(s) for the business spec file provided.
 
-Input: read the business spec file path the user supplied after invoking this skill.
+Input: read the arguments the user supplied after invoking this skill as an optional leading `auto` token, then the business spec file path (e.g. `spec/business/checkout/STORY-042.md` or `auto spec/business/checkout/STORY-042.md`). `auto` present -> auto mode; absent -> interactive mode (default).
 
-Rules before starting:
+Rules before starting (interactive mode):
 - confirm the business spec file exists and is readable
 - active phase must be planning
 - read `spec/architecture/ARCH-DECISIONS.md` §Layer Scope first (ask interactively if absent and the file is empty/placeholder — never infer)
@@ -18,4 +18,10 @@ Rules before starting:
 - do not self-approve any LLD
 - wait for human approval (covering every in-scope LLD as one gate) before any downstream stage runs
 
-The canonical contract documents dual-LLD output as the default shape when Layer Scope = both, and single-artifact output for frontend-only or backend-only projects.
+Rules before starting (auto mode — `auto` token present):
+- same confirmations, same required input, and same LLD production as interactive mode above
+- do not pause for the combined review gate — apply `spec/commands/speccraft.tech-design.md` § Auto Mode instead: the agent self-reviews every in-scope LLD against the same checklist a human reviewer would use, `revise` findings get up to 2 automatic redraft retries (unresolved concerns logged as Accepted Issues, never dropped), and a `blocked` conflict is resolved and logged (`Decided By: auto-mode-ai`) instead of escalated
+- still do not invoke /speccraft.decompose — this command does not auto-chain into the next stage even in auto mode
+- report the same minimal handoff block with `Mode: auto`, then stop
+
+The canonical contract documents dual-LLD output as the default shape when Layer Scope = both, and single-artifact output for frontend-only or backend-only projects, plus the full `/speccraft.tech-design auto <business-spec-file>` signature and § Auto Mode mechanics.

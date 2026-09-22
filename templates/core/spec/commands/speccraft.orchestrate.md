@@ -86,7 +86,7 @@ A missing or unreadable business spec file ends the run with a clear error in bo
 
 Auto mode runs every one of the 13 stages below in the same order, producing the same artifacts, under the same traceability and metrics obligations as interactive mode. The only thing auto mode changes is **who clears each review gate and whether execution pauses to do it**. It never skips a review, and it never hides a decision — it just does not wait for a human to make it.
 
-This section is the authoritative behavior for every place elsewhere in this document that says "HARD STOP", "wait for human", "pause", or "requires human approval" — read those as scoped to interactive mode; in auto mode, this section's rules apply instead.
+This section is the authoritative behavior for every place elsewhere in this document that says "HARD STOP", "wait for human", "pause", or "requires human approval" — read those as scoped to interactive mode; in auto mode, this section's rules apply instead. Stages 2, 4, 6, 8, 10, and 12 invoke behavior defined in another command's own contract (`speccraft.tech-design.md`, `speccraft.decompose.md`, `speccraft.implement.md`, `speccraft.unit-test.md`, `speccraft.integration-test.md`, `speccraft.validate.md`) — each of those contracts now carries its own `## Auto Mode` section that is, by its own text, also authoritative whenever `/speccraft.orchestrate auto` invokes it. This section does not need to separately override their stop language; it already is overridden, at the source.
 
 ### Who reviews
 

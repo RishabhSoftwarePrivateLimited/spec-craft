@@ -137,7 +137,7 @@ Authoritative structure: `spec/architecture/` (see `ARCH-DECISIONS.md` `AD-BACKE
 4. configure the locked UI component library, if any
 5. configure strict typing per the locked language/type-checker decision
 6. configure the locked test runner (unit + component testing setup)
-7. create the folder structure defined in `Required Folder Structure` (Frontend) above — empty folders with `.gitkeep` where needed, plus empty `rules/`, `rules/shared/`, `skills/`, `skills/shared/` subfolders (populated later per root README.md §Before You Start steps 5-6)
+7. create the folder structure defined in `Required Folder Structure` (Frontend) above — empty folders with `.gitkeep` where needed. For `rules/`, `rules/shared/`, `skills/`, `skills/shared/`: if `spec/architecture/rules-seed/frontend/` exists (staged by `/speccraft.plan-foundation`), move its `rules/` and `skills/` trees into this root as-is and delete the staging folder; otherwise create these four subfolders empty with `.gitkeep` (populated later per root README.md §Before You Start steps 7-8)
 8. create any auth/session stub required by the locked auth decision
 9. create a root route/page stub implementing the locked auth redirect behavior, if applicable
 10. create `.env.example` with all required env var names and placeholder values
@@ -154,7 +154,7 @@ Authoritative structure: `spec/architecture/` (see `ARCH-DECISIONS.md` `AD-BACKE
 4. configure the locked ORM/data-access layer and database connection config, if any
 5. configure strict typing per the locked language/type-checker decision
 6. configure the locked test runner (unit + integration testing setup)
-7. create the folder structure defined in `Required Folder Structure` (Backend) above — empty folders with `.gitkeep` where needed, plus empty `rules/`, `rules/shared/`, `skills/`, `skills/shared/` subfolders (populated later per root README.md §Before You Start steps 5-6)
+7. create the folder structure defined in `Required Folder Structure` (Backend) above — empty folders with `.gitkeep` where needed. For `rules/`, `rules/shared/`, `skills/`, `skills/shared/`: if `spec/architecture/rules-seed/backend/` exists (staged by `/speccraft.plan-foundation`), move its `rules/` and `skills/` trees into this root as-is and delete the staging folder; otherwise create these four subfolders empty with `.gitkeep` (populated later per root README.md §Before You Start steps 7-8)
 8. create any auth/session middleware stub required by the locked auth decision
 9. create a root health-check endpoint stub implementing the locked baseline route behavior, if applicable
 10. create `.env.example` with all required env var names and placeholder values
@@ -303,6 +303,7 @@ Read this document together with:
 
 - `spec/architecture/ARCH-DECISIONS.md` — locked stack decisions (`AD-FRONTEND-*` / `AD-BACKEND-*` / `AD-X-*`); each scaffold must match its section
 - `spec/architecture/` — any supporting arch spec files this project adds
+- `spec/commands/speccraft.plan-foundation.md` — greenfield command that fills this file's own placeholder sections and stages `spec/architecture/rules-seed/<layer>/` content step 7 above consumes; not required, but if it ran, its output is what step 7 picks up
 - `spec/init.md` — execution bootstrap
 - `spec/commands/speccraft.orchestrate.md` — scaffold is Stage 5.5 in the master workflow, run per-layer as needed
 - `spec/workflows/implementation/IMPLEMENTATION-STAGE.md` — scaffold is a precondition, per layer

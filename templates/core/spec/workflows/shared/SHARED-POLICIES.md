@@ -62,7 +62,20 @@ Applies at every stage gate:
 
 Silence is not approval. A well-structured artifact is not approval.
 
-**Sanctioned exception:** `/speccraft.orchestrate auto <business-spec-file>` and `/speccraft.plan-foundation auto <business-spec-file> "<tech stack description>"` (each command's own auto mode) are the only invocations permitted to clear a gate above without a human message — each governed entirely by that command's own `## Auto Mode` section, not by an exception carved into this rule. Both still write a full review record and, for `revise`/`blocked` outcomes, a logged rationale (`Decided By` / `Approver` = `auto-mode-ai` for orchestrate, `Source: auto-mode-resolved` rows plus inline `Open Concerns` notes for plan-foundation, which keeps no separate traceability file) — auto mode removes the pause, not the review.
+**Sanctioned exception:** the following are the only invocations permitted to clear a gate above without a human message — each governed entirely by that command's own `## Auto Mode` section, not by an exception carved into this rule:
+
+- `/speccraft.orchestrate auto <business-spec-file>`
+- `/speccraft.plan-foundation auto <business-spec-file> "<tech stack description>"`
+- `/speccraft.tech-design auto <business-spec-file>`
+- `/speccraft.decompose auto <lld-fe-file> <lld-be-file>` / `/speccraft.decompose auto <lld-file>`
+- `/speccraft.implement auto <task-id>`
+- `/speccraft.unit-test auto <task-id>`
+- `/speccraft.integration-test auto <task-id>`
+- `/speccraft.validate auto <task-id>`
+
+The last six also apply — via the same `## Auto Mode` section in each of their own command contracts, not via any override text in `speccraft.orchestrate.md` — when `/speccraft.orchestrate auto` invokes their behavior for its own Stage 2 through Stage 12; orchestrate does not carry gate-clearing logic for these six stages on their behalf.
+
+All sanctioned auto-mode invocations still write a full review record and, for `revise`/`blocked` outcomes, a logged rationale (`Decided By` / `Approver` = `auto-mode-ai`, or `Source: auto-mode-resolved` rows plus inline `Open Concerns` notes for plan-foundation, which keeps no separate traceability file) — auto mode removes the pause, not the review.
 
 ---
 
