@@ -90,9 +90,18 @@ An issue found during review may be accepted instead of fixed, only with explici
 Every review gate must also check the `Workflow Metrics` row this turn appended (per `SHARED-POLICIES.md` §Duration Capture / §Metrics Rules) — not just the artifact content.
 
 - **`Start = n/a` (or `Duration (min) = n/a`) with no justification in `Notes` is an automatic `revise` trigger.** The reviewer must not wave this through as an incidental gap or bundle it silently into an `approved` outcome — an unjustified `n/a` row is treated the same as any other unmet review requirement in this contract.
+- **A `Stage` value that is not exactly one of the values listed in `SHARED-POLICIES.md` §Metrics Rules / Schema — including a range (`Intake → Validation`) or a single row rolling up several stages or a whole story — is also an automatic `revise` trigger.** sdd-insights buckets rows by exact `Stage`, so such a row silently disappears from its per-stage view. The fix is the metrics-only loop in `SHARED-POLICIES.md` §Revision Rows (Invalid-Stage / rollup rows): supersede the row, append correct per-stage rows; the artifact itself is not redone.
 - If `Notes` already states the reason (the narrow legitimate case described in `SHARED-POLICIES.md` §Duration Capture — no clean command-start boundary to capture against), the row is acceptable as-is and does not trigger `revise` on this basis.
 - This `revise` does not require redoing the artifact itself (the LLD/task/code/test output may be entirely sound). What it requires, per §Revision Rows in `SHARED-POLICIES.md`, is a corrective metrics row appended next turn — never editing the flagged row — carrying either a real captured `Start`/`End` if one is genuinely available, or an explicit justification note if it is not.
 - This is deliberately a low-cost revision loop (fix the row, not the design), not a loophole — the point is that an unjustified `n/a` has a real consequence at the next review gate instead of none, per `spec/commands/*.md` Exit Behavior steps that append this row before the hard stop.
+
+### Delegated Work Integrity
+
+When any part of the stage was produced by a sub-agent, every review gate must also confirm that the story's own progress file and traceability shard carry that work (`SHARED-POLICIES.md` §Sub-Agent Delegation Rules).
+
+- **A stage output with no matching progress section or traceability rows is an automatic `revise` trigger.** The same applies when the parent skipped the Parent Verification Gate.
+- The fix is a write-back only: re-dispatch the sub-agent or backfill the missing entries from the artifacts it produced. The artifact itself is not redone.
+- A missing progress or traceability entry can never be recorded as an Accepted Issue.
 
 ---
 

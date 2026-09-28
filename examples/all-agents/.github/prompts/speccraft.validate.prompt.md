@@ -23,4 +23,10 @@ Rules before starting (auto mode — `auto` token present):
 - there is no revise loop to self-review here (validation is read-only); apply `spec/commands/speccraft.validate.md` § Auto Mode instead: a `blocked` gap is logged to the traceability shard (`Approver: auto-mode-ai`, naming which earlier stage's own auto mode the gap routes back to) instead of pausing, and the run continues — the task's Final Task State still records `blocked` even though execution does not pause
 - report the same minimal handoff block with `Mode: auto`, then stop
 
+Rules in both modes — sub-agents (hard rule):
+- if you hand any of this work to a sub-agent (parallel or not), follow `spec/commands/speccraft.validate.md` § Sub-Agent Delegation
+- the brief must name the story's exact `spec/progress/<module>/progress-<STORY-ID>.md` and `spec/traceability/<module>/<STORY-ID>/TRACEABILITY.md` and the writes required; the sub-agent writes them before returning and ends with a Write-Back Receipt
+- read those files to verify them, and backfill or re-dispatch any gap before your handoff
+- if you are running as a sub-agent yourself, make those writes before returning and end with a Write-Back Receipt
+
 The canonical contract now documents the dual chain-length branch by task Layer, requires backend tasks to have an approved integration-tests stage before this command runs, and documents the full `/speccraft.validate auto <task-id>` signature and § Auto Mode mechanics.

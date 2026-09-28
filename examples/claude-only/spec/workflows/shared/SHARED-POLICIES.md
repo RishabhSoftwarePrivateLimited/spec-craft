@@ -176,11 +176,77 @@ If the next step would require editing a locked earlier-phase artifact, say so e
 
 ---
 
+## Sub-Agent Delegation Rules
+
+**Hard rule. Applies to any command that hands stage work to a sub-agent (Agent/Task tool or any host's equivalent), parallel or sequential, in interactive and auto mode alike.** A sub-agent starts with no context beyond the brief it is given. It does not inherit this document, `TRACEABILITY-RULES.md`, or the orchestrating command's contract. Progress and traceability duties that are not handed over explicitly get lost, so this section makes the hand-over mandatory and checks it.
+
+Where it is wired in:
+- `/speccraft.orchestrate`: § Parallel Execution And Sub-Agents
+- every story-level command (`tech-design`, `decompose`, `implement`, `unit-test`, `integration-test`, `validate`, `change`): its own `## Sub-Agent Delegation` section, which lists the exact writes its stage requires
+- `spec/AGENTS.md`, which sub-agents read on entry
+
+### Ownership
+
+- A sub-agent working on a story **owns** that story's progress file (`spec/progress/<module>/progress-<STORY-ID>.md`) and traceability shard (`spec/traceability/<module>/<STORY-ID>/TRACEABILITY.md`).
+- It writes them **itself, at each stage it runs, before it returns**. It never leaves them for the parent to do "later".
+- Delegating a stage delegates every write obligation of that stage:
+  - progressive traceability links for each task's Layer chain (`TRACEABILITY-RULES.md`)
+  - per-story and per-task progress sections (`## Intake`, `## LLD`, `## Decomposition`, and under `## Task: TASK-<id>`: `### Status` / `### Implementation` / `### Testing` / `### Integration Testing` (backend only) / `### Validation` / `### Blockers` / `### Decisions`)
+  - one `Workflow Metrics` row per stage (§Metrics Rules)
+  - any Conflict Decision / Blocker / Decision rows (§Conflict Decision Rules, §Blocker And Decision Log Rules)
+
+### Mandatory Delegation Brief
+
+The parent's prompt to the sub-agent must contain all of the following. A brief missing any item is a workflow violation.
+
+1. the canonical documents to read first: `spec/AGENTS.md`, the stage workflow doc, the command contract for each delegated stage, this file, `spec/workflows/shared/TRACEABILITY-RULES.md`
+2. Story ID, task ID(s), and each task's `Layer`
+3. the **exact** progress file path and traceability shard path
+4. the required writes per stage (the Ownership list above)
+5. the mode (`interactive` / `auto`)
+6. the instruction to return a Write-Back Receipt (below) and not to write shared files (see Shared-File Serialisation)
+
+### Write-Back Receipt
+
+The sub-agent's final message must include:
+
+```
+Write-Back Receipt:
+Story ID:
+Progress File: <path> — sections appended: <list per stage/task>
+Traceability Shard: <path> — rows appended: <IDs/links per stage/task>
+Workflow Metrics Rows: <one per stage run>
+Conflict / Blocker / Decision Rows: <IDs or none>
+Proposed Shared-File Rows: <rows for the parent to write, or none>
+```
+
+`none` in a progress or traceability field is valid only with a stated reason (e.g. the stage produced no artifact).
+
+### Shared-File Serialisation
+
+Parallel sub-agents must not write repo-wide files. These are: `spec/traceability/shared/STORY-DEPENDENCIES.md`, anything under `spec/progress/shared/` or `spec/traceability/shared/`, and anything under `spec/architecture/`. Concurrent writes to one file silently lose updates. A sub-agent returns the rows it would have written under `Proposed Shared-File Rows`, and the parent writes them one at a time after the sub-agents return. Per-story files have exactly one owner, so the sub-agent writes those directly.
+
+### Parent Verification Gate — Non-Skippable
+
+After each sub-agent returns, the parent must **read the actual files**, not rely on the receipt alone. It does this before it marks that story's stage done, starts the next stage for that story, or emits any handoff. It confirms that:
+
+1. the progress file has the expected sections for every stage and task the sub-agent ran
+2. the traceability shard has rows covering each task's Layer chain up to the stage reached (4 links for frontend, 5 for backend)
+3. there is one `Workflow Metrics` row per stage run, each with a valid `Stage` value
+
+On any gap, the parent either re-dispatches the same sub-agent with the gap listed, or backfills the missing entries itself from the artifacts the sub-agent produced. Either way, the fix happens before continuing. A missing progress or traceability entry **can never** be logged as an Accepted Issue, and fixing it does not count toward auto mode's revise-retry cap. It is a write-back, not a content revision.
+
+§Done Criteria Rules (item 5, and "execution overall done") apply unchanged to delegated work: a story is never `done` while this gate has not passed for every sub-agent that worked on it.
+
+---
+
 ## Metrics Rules
 
 ### When To Record
 
 Record metrics after producing primary artifact(s), before the hard stop. One row per execution turn. Revisions add new rows — never overwrite existing rows.
+
+**One row per stage — never a rollup.** A single row covering several stages or a whole story (e.g. `Command = orchestrate auto (all stages)`, `Stage = Intake → Validation`) is never valid. When one invocation runs several stages (`/speccraft.orchestrate`, especially auto mode), write one row per stage, each with that stage's own `Start`/`End` and token counts — sdd-insights buckets rows by exact `Stage` value, so a rollup row is silently dropped from its per-stage view.
 
 ### Schema
 
@@ -189,7 +255,7 @@ Record metrics after producing primary artifact(s), before the hard stop. One ro
 | Story ID | Work item ID | From command input |
 | Layer | `frontend` / `backend` / `shared` | From task's `Layer` field; `shared` for stages that precede the FRONTEND/BACKEND fork (intake, decomposition-level rows covering both) |
 | Command | Command name | tech-design / decompose / implement / unit-test / integration-test / validate / change |
-| Stage | Workflow stage | Intake / LLD / Decomposition / Implementation / Testing / Integration Testing / Validation / Change Request |
+| Stage | Workflow stage | Exactly one of: Intake / LLD / Decomposition / Implementation / Testing / Integration Testing / Validation / Change Request (non-story commands use the single value their own contract names, e.g. `Scaffold`). No ranges (`Intake → Validation`), no combined values, no extra text — sdd-insights matches this field exactly |
 | Date | YYYY-MM-DD | Current date |
 | Model | AI model ID | e.g., claude-sonnet-4-6 |
 | Start | YYYY-MM-DD HH:MM | Real wall-clock timestamp, captured at command start (see Duration Capture) |
@@ -250,6 +316,8 @@ Real usage first, char-count fallback second — never fabricate a middle number
 When a command is revised: do not edit the existing row — it is immutable history. Append a new row with same Story ID + Command, Status = `in-review`. Add revision reason to Notes.
 
 **Metrics-only revise** (triggered by an unjustified `n/a`, per §Duration Capture step 5): the stage's overall review outcome for that turn is `revise` — per the Human-Approval Rule, downstream progression waits for `approved`, and an unjustified `n/a` row means this turn is not yet `approved`, same as any other unresolved review finding. What makes this revise cheap is scope, not exemption: fixing it does not reopen the LLD/task/code/test content review — it only requires appending a new metrics row, same Story ID + Command, Status `in-review`, that either supplies a real `Start`/`End` (if genuinely recoverable, e.g. it exists in the session transcript even though it wasn't captured live) or an explicit justification in `Notes` for why `n/a` stands. Once that row is appended, re-review is a one-line check, not a re-read of the artifact.
+
+**Invalid-Stage / rollup rows** (a `Stage` value not in the Schema list, or one row spanning several stages — see §When To Record): the row is never deleted. Move it, unchanged, under a `## Workflow Metrics — Superseded Rows` heading in the same shard (sdd-insights does not parse that heading, so it drops out of the totals without losing history), then append the corrected per-stage rows under `## Workflow Metrics`, reconstructing each stage's `Start`/`End` and tokens from the session transcript per §Duration Capture / §Token Capture. Note the reason in each new row's `Notes`. Like the `n/a` case, this is a metrics-only revise — the artifact itself is not reopened.
 
 ### Where To Write
 

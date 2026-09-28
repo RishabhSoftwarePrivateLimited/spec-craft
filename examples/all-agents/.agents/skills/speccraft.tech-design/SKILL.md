@@ -24,4 +24,10 @@ Rules before starting (auto mode — `auto` token present):
 - still do not invoke /speccraft.decompose — this command does not auto-chain into the next stage even in auto mode
 - report the same minimal handoff block with `Mode: auto`, then stop
 
+Rules in both modes — sub-agents (hard rule):
+- if you hand any of this work to a sub-agent (parallel or not), follow `spec/commands/speccraft.tech-design.md` § Sub-Agent Delegation
+- the brief must name the story's exact `spec/progress/<module>/progress-<STORY-ID>.md` and `spec/traceability/<module>/<STORY-ID>/TRACEABILITY.md` and the writes required; the sub-agent writes them before returning and ends with a Write-Back Receipt
+- read those files to verify them, and backfill or re-dispatch any gap before your handoff; only you (the parent) write `spec/traceability/shared/STORY-DEPENDENCIES.md`
+- if you are running as a sub-agent yourself, make those writes before returning and end with a Write-Back Receipt
+
 The canonical contract documents dual-LLD output as the default shape when Layer Scope = both, and single-artifact output for frontend-only or backend-only projects, plus the full `/speccraft.tech-design auto <business-spec-file>` signature and § Auto Mode mechanics.

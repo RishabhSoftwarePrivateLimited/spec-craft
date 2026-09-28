@@ -17,4 +17,10 @@ Rules before starting:
 - do not self-approve any part of the bundle
 - wait for human approval covering the whole bundle before any downstream stage runs
 
+Rules — sub-agents (hard rule):
+- if you hand any of this work to a sub-agent (parallel or not), follow `spec/commands/speccraft.change.md` § Sub-Agent Delegation; never delegate Pass 1
+- the brief must name the story's exact `spec/progress/<module>/progress-<STORY-ID>.md` and `spec/traceability/<module>/<STORY-ID>/TRACEABILITY.md` and the writes required; the sub-agent writes them before returning and ends with a Write-Back Receipt
+- read those files to verify them, and backfill or re-dispatch any gap before your handoff; only you (the parent) write `spec/traceability/shared/STORY-DEPENDENCIES.md`
+- if you are running as a sub-agent yourself, make those writes before returning and end with a Write-Back Receipt
+
 The canonical contract documents the full two-pass, atomic cascade mechanism — this stub only summarizes the entry rules.

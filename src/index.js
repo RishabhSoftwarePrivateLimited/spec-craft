@@ -5,13 +5,13 @@ const clack = require('@clack/prompts');
 const pkg = require('../package.json');
 const prompts = require('./prompts');
 const { copySelected, ConflictError } = require('./copy');
-const { configureHooksPath, installGlobal } = require('./postSteps');
+const { configureHooksPath, installGlobalAll } = require('./postSteps');
 
 const TEMPLATES_ROOT = path.join(__dirname, '..', 'templates');
 
 function parseArgv(argv) {
   const args = argv.slice(2);
-  const out = { targetDir: undefined, agents: undefined, force: false, noHooks: false, yes: false };
+  const out = { targetDir: undefined, agents: undefined, scope: undefined, force: false, noHooks: false, yes: false };
 
   const positional = [];
   for (let i = 0; i < args.length; i++) {
@@ -21,6 +21,8 @@ function parseArgv(argv) {
     else if (a === '--yes' || a === '-y') out.yes = true;
     else if (a === '--agents') out.agents = (args[++i] || '').split(',').filter(Boolean);
     else if (a.startsWith('--agents=')) out.agents = a.slice('--agents='.length).split(',').filter(Boolean);
+    else if (a === '--scope') out.scope = args[++i] || '';
+    else if (a.startsWith('--scope=')) out.scope = a.slice('--scope='.length);
     else positional.push(a);
   }
 
@@ -35,11 +37,12 @@ async function run(argv = process.argv) {
 
   const targetDir = await prompts.resolveTargetDir(parsed);
   const agents = await prompts.resolveAgents(parsed, targetDir);
+  const scope = await prompts.resolveScope(parsed, agents);
   const gitHooks = await prompts.resolveGitHooks(parsed, targetDir);
   const updateCore = await prompts.resolveSpecUpdate(parsed, targetDir, pkg.version);
   const effectiveForce = parsed.force || updateCore;
 
-  await prompts.confirmWrite({ targetDir, agents, gitHooks, force: parsed.force, updateCore }, { yes: parsed.yes });
+  await prompts.confirmWrite({ targetDir, agents, gitHooks, force: parsed.force, updateCore, scope }, { yes: parsed.yes });
 
   const selectedKeys = prompts.computeSelectedKeys({ agents, gitHooks, targetDir, force: parsed.force, updateCore });
 
@@ -54,6 +57,7 @@ async function run(argv = process.argv) {
         targetDir,
         force: effectiveForce,
         pkgVersion: pkg.version,
+        scope,
       });
     } catch (err) {
       spinner.stop('Failed');
@@ -72,8 +76,8 @@ async function run(argv = process.argv) {
     else clack.log.warn(`Skipped git hook wiring: ${result.reason}`);
   }
 
-  for (const agentKey of agents) {
-    const { installed, skipped } = installGlobal(agentKey, {
+  if (scope === 'global' || scope === 'both') {
+    const { installed, skipped } = installGlobalAll(agents, {
       templatesRoot: TEMPLATES_ROOT,
       force: parsed.force,
     });

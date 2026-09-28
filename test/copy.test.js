@@ -8,8 +8,9 @@ const fs = require('fs-extra');
 const { execFileSync } = require('child_process');
 
 const { copySelected, mergeGitignore, ConflictError, GITIGNORE_START } = require('../src/copy');
-const { configureHooksPath, installGlobal } = require('../src/postSteps');
-const { isNonEmptyDir } = require('../src/prompts');
+const { configureHooksPath, installGlobal, installGlobalAll, globalTargets } = require('../src/postSteps');
+const { isNonEmptyDir, computeSelectedKeys, detectInstalledAgents } = require('../src/prompts');
+const { parseArgv } = require('../src/index');
 
 const TEMPLATES_ROOT = path.join(__dirname, '..', 'templates');
 const PKG_VERSION = require('../package.json').version;
@@ -190,4 +191,110 @@ test('spec/SPEC-VERSION.md is stamped with the tool package version on core copy
   assert.ok(content.includes(`current: ${PKG_VERSION}`));
 
   fs.removeSync(target);
+});
+
+function install(target, agents, { scope } = {}) {
+  const keys = computeSelectedKeys({ agents, gitHooks: false, targetDir: target, force: false, updateCore: false });
+  copySelected(keys, {
+    templatesRoot: TEMPLATES_ROOT,
+    targetDir: target,
+    force: false,
+    pkgVersion: PKG_VERSION,
+    scope,
+  });
+  return keys;
+}
+
+test('antigravity: writes .agents/skills + GEMINI.md, no .gemini/', () => {
+  const target = tmpDir('antigravity');
+  const keys = install(target, ['antigravity']);
+
+  assert.ok(keys.includes('agentic'), 'antigravity pulls in the agentic group');
+  assert.ok(fs.existsSync(path.join(target, '.agents', 'skills', 'speccraft.scaffold', 'SKILL.md')));
+  assert.ok(fs.existsSync(path.join(target, 'GEMINI.md')));
+  assert.ok(!fs.existsSync(path.join(target, '.gemini')));
+  assert.deepEqual(detectInstalledAgents(target).sort(), ['agentic', 'antigravity']);
+
+  fs.removeSync(target);
+});
+
+test('gemini CLI: writes .gemini/ + GEMINI.md, no .agents/, antigravity not reported installed', () => {
+  const target = tmpDir('gemini-cli');
+  install(target, ['gemini']);
+
+  assert.ok(fs.existsSync(path.join(target, '.gemini', 'commands')));
+  assert.ok(fs.existsSync(path.join(target, 'GEMINI.md')));
+  assert.ok(!fs.existsSync(path.join(target, '.agents')));
+  assert.deepEqual(detectInstalledAgents(target), ['gemini']);
+
+  fs.removeSync(target);
+});
+
+test('gemini then antigravity on the same target: no conflict, GEMINI.md untouched', () => {
+  const target = tmpDir('gemini-then-antigravity');
+  install(target, ['gemini']);
+  const geminiMd = path.join(target, 'GEMINI.md');
+  fs.writeFileSync(geminiMd, 'user edits');
+
+  install(target, ['antigravity']);
+
+  assert.equal(fs.readFileSync(geminiMd, 'utf8'), 'user edits');
+  assert.ok(fs.existsSync(path.join(target, '.agents', 'skills')));
+  fs.removeSync(target);
+});
+
+test('antigravity on a target with .agents already installed: no conflict', () => {
+  const target = tmpDir('antigravity-after-agentic');
+  install(target, ['agentic']);
+
+  const keys = install(target, ['antigravity']);
+  assert.ok(!keys.includes('agentic'), 'already-installed include is not re-copied');
+  assert.ok(fs.existsSync(path.join(target, 'GEMINI.md')));
+
+  fs.removeSync(target);
+});
+
+test('scope global: project gets spec/ + CLAUDE.md but no .claude/', () => {
+  const target = tmpDir('scope-global');
+  install(target, ['claude'], { scope: 'global' });
+
+  assert.ok(fs.existsSync(path.join(target, 'spec')));
+  assert.ok(fs.existsSync(path.join(target, 'CLAUDE.md')));
+  assert.ok(!fs.existsSync(path.join(target, '.claude')));
+
+  // re-run with an existing CLAUDE.md must not conflict under global scope
+  install(target, ['claude'], { scope: 'global' });
+
+  fs.removeSync(target);
+});
+
+test('global install: antigravity writes ~/.agents/skills', () => {
+  const fakeHome = tmpDir('fake-home-antigravity');
+
+  withFakeHome(fakeHome, () => {
+    const { installed } = installGlobal('antigravity', { templatesRoot: TEMPLATES_ROOT, force: false });
+    assert.ok(installed.length > 0);
+  });
+  assert.ok(fs.existsSync(path.join(fakeHome, '.agents', 'skills', 'speccraft.scaffold', 'SKILL.md')));
+  assert.ok(!fs.existsSync(path.join(fakeHome, '.gemini')));
+
+  fs.removeSync(fakeHome);
+});
+
+test('global install: antigravity + agentic share ~/.agents/skills, installed once', () => {
+  const fakeHome = tmpDir('fake-home-shared');
+  assert.equal(globalTargets(['antigravity', 'agentic']).length, 1);
+
+  withFakeHome(fakeHome, () => {
+    const { skipped } = installGlobalAll(['antigravity', 'agentic'], { templatesRoot: TEMPLATES_ROOT, force: false });
+    assert.equal(skipped.length, 0, 'second owner of the same target is not re-run');
+  });
+
+  fs.removeSync(fakeHome);
+});
+
+test('parseArgv: --scope in both forms', () => {
+  assert.equal(parseArgv(['node', 'speccraft', '--scope=both']).scope, 'both');
+  assert.equal(parseArgv(['node', 'speccraft', '--scope', 'global', 'dir']).scope, 'global');
+  assert.equal(parseArgv(['node', 'speccraft', 'dir']).scope, undefined);
 });

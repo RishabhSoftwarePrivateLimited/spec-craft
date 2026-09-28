@@ -26,4 +26,10 @@ Rules before starting (auto mode — `auto` token present):
 - still do not begin execution or scaffold — this command does not auto-chain into the next stage even in auto mode
 - report the same minimal handoff block with `Mode: auto`, then stop
 
+Rules in both modes — sub-agents (hard rule):
+- if you hand any of this work to a sub-agent (parallel or not), follow `spec/commands/speccraft.decompose.md` § Sub-Agent Delegation
+- the brief must name the story's exact `spec/progress/<module>/progress-<STORY-ID>.md` and `spec/traceability/<module>/<STORY-ID>/TRACEABILITY.md` and the writes required; the sub-agent writes them before returning and ends with a Write-Back Receipt
+- read those files to verify them, and backfill or re-dispatch any gap before your handoff
+- if you are running as a sub-agent yourself, make those writes before returning and end with a Write-Back Receipt
+
 The canonical contract documents the dual-input signature (`/speccraft.decompose <lld-fe-file> <lld-be-file>`) for Layer Scope = both, a single-file signature for single-layer projects, the mandatory Layer field on every emitted task, the full `auto` signatures, and § Auto Mode mechanics.
