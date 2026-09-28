@@ -9,6 +9,7 @@
 **Dual-layer branch:** stages 11-12 (Integration Testing Generation, Integration Testing Review Gate) run for backend-tagged tasks only; frontend-tagged tasks go straight from stage 10 (Testing Review Gate) to stage 13 (Final Validation) — a per-task branch, not per-story
 **CR alternate entry:** `/speccraft.change` replaces stages 1-5 for a story whose LLD pair is already `approved`/`done`, and auto-cascades a compatible change atomically through its forward-reachable dependents — see `spec/workflows/change-request/CHANGE-REQUEST-STAGE.md`. Stages 6-14 run unchanged for every delta task produced, branching per task `Layer` exactly as normal decomposition output.
 **Human-in-loop:** stop at every review gate; silence is not approval; AI cannot self-approve
+**Sub-agents:** a sub-agent writes its own story's progress + traceability at every stage before returning; the parent reads the files to verify before continuing; only the parent writes repo-wide files — `SHARED-POLICIES.md` §Sub-Agent Delegation Rules
 **Hard boundary:** planning stages do not edit business specs; execution stages do not edit approved upstream artifacts; surface gaps — do not silently patch
 **Never load:** `CHANGE.md`, `*.original.md`, `spec/_archive/**`, `_archive/**`
 **Handoff format:** what changed / stage artifact / specs that guided it / assumptions / verification / stage status / remaining gaps
@@ -101,6 +102,12 @@ If this project's architecture docs grow large enough to need a planning-only vs
 - Within one task, run implementation -> testing -> (integration testing, backend-tagged tasks only) -> validation as one chained session.
 - Files loaded for implementation stay in context for testing and validation of the same task.
 - Do not reload `AGENTS.md`, `ARCH-DECISIONS.md`, the layer-matched `src-code-<layer>/AGENTS.md`, or the approved task file within the same task unless a new session starts.
+- **Sub-agents (hard rule):**
+  - If you are running as a sub-agent, you own your story's `spec/progress/<module>/progress-<STORY-ID>.md` and `spec/traceability/<module>/<STORY-ID>/TRACEABILITY.md`. Write both at every stage you run, before you return.
+  - End with a Write-Back Receipt.
+  - Never write repo-wide files (`spec/traceability/shared/**`, `spec/progress/shared/**`, `spec/architecture/**`). Propose those rows in the receipt instead.
+  - If you are delegating to a sub-agent, include these duties in its brief, and verify the files by reading them before continuing.
+  - Full rule: `spec/workflows/shared/SHARED-POLICIES.md` §Sub-Agent Delegation Rules.
 
 Minimum context if limited:
 - planning: `spec/AGENTS.md` (Agent Delta), current stage workflow doc (Agent Delta), `spec/architecture/ARCH-DECISIONS.md` (Agent Delta), current input spec

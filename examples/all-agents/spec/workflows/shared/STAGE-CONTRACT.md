@@ -95,6 +95,14 @@ Every review gate must also check the `Workflow Metrics` row this turn appended 
 - This `revise` does not require redoing the artifact itself (the LLD/task/code/test output may be entirely sound). What it requires, per §Revision Rows in `SHARED-POLICIES.md`, is a corrective metrics row appended next turn — never editing the flagged row — carrying either a real captured `Start`/`End` if one is genuinely available, or an explicit justification note if it is not.
 - This is deliberately a low-cost revision loop (fix the row, not the design), not a loophole — the point is that an unjustified `n/a` has a real consequence at the next review gate instead of none, per `spec/commands/*.md` Exit Behavior steps that append this row before the hard stop.
 
+### Delegated Work Integrity
+
+When any part of the stage was produced by a sub-agent, every review gate must also confirm that the story's own progress file and traceability shard carry that work (`SHARED-POLICIES.md` §Sub-Agent Delegation Rules).
+
+- **A stage output with no matching progress section or traceability rows is an automatic `revise` trigger.** The same applies when the parent skipped the Parent Verification Gate.
+- The fix is a write-back only: re-dispatch the sub-agent or backfill the missing entries from the artifacts it produced. The artifact itself is not redone.
+- A missing progress or traceability entry can never be recorded as an Accepted Issue.
+
 ---
 
 ## Traceability Contract Rules

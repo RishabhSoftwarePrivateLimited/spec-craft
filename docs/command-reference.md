@@ -36,3 +36,11 @@ Every stage command `/speccraft.orchestrate` chains through also supports the sa
 - `/speccraft.validate auto <task-id>` — see `spec/commands/speccraft.validate.md` § Auto Mode (no `revise` outcome; a `blocked` gap is logged and the run continues rather than pausing)
 
 In every case, auto mode only removes the pause at that command's own review gate — it does not chain into the next command. Chaining across commands remains exclusively `/speccraft.orchestrate`'s responsibility, in both interactive and auto mode.
+
+`/speccraft.orchestrate` may hand stories or tasks to sub-agents, including several in parallel, in either mode. Delegation is governed by a hard rule (`spec/workflows/shared/SHARED-POLICIES.md` § Sub-Agent Delegation Rules):
+
+- The parent's brief must name the story's exact progress file and traceability shard.
+- The sub-agent writes both at every stage before it returns, and ends with a Write-Back Receipt.
+- The parent reads the files to verify them before the story advances.
+- Only the parent writes repo-wide files such as `STORY-DEPENDENCIES.md`.
+- A missing progress or traceability entry is always backfilled. It is never accepted as an issue.

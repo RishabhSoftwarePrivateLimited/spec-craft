@@ -117,7 +117,33 @@ A `blocked` outcome is never auto-approved without a logged reason — it is alw
 - **Final consolidated handoff**: at the end of an auto run (whether it reaches Stage 13 or ends early on an unrecoverable input error), output one summary covering every stage's outcome, every Accepted Issue, and every auto-resolved conflict/blocker, so a human can audit the entire unattended run after the fact.
 - Metrics (`Workflow Metrics` rows) and traceability updates are required at every stage exactly as in interactive mode — auto mode changes gate-pause behavior only, nothing else.
 - **One metrics row per stage, never one per run.** Running all stages unattended in one invocation does not make it one unit of work: each stage's own row (written by the stage's underlying command contract, with its own `Start`/`End`) is required. A story-level rollup row (`Command = orchestrate auto (all stages)`, `Stage = Intake → Validation`, or any other range/combined value) is forbidden — see `spec/workflows/shared/SHARED-POLICIES.md` §Metrics Rules / §When To Record.
+- **Progress & traceability self-check before the Final consolidated handoff.**
+  - For every story and task in this run, including any handled by a sub-agent, confirm three things:
+    1. `spec/progress/<module>/progress-<STORY-ID>.md` has a section for every stage and task that ran
+    2. the story's traceability shard carries each task's full Layer chain (4 links for frontend, 5 for backend)
+    3. repo-wide rows proposed by sub-agents have been written
+  - Backfill any gap before emitting the handoff. A gap is never an Accepted Issue.
+  - Report the check's result in the handoff.
 - **Metrics self-check before the Final consolidated handoff.** For each stage that ran in this story — Intake, LLD, Decomposition, Implementation, Testing, Integration Testing (backend-tagged tasks only), Validation — confirm the story's traceability shard has at least one `Workflow Metrics` row whose `Stage` is exactly that value, for each in-scope layer, and that no row carries a range/combined `Stage`. Fix any missing or invalid row per `SHARED-POLICIES.md` §Revision Rows (Invalid-Stage / rollup rows) before emitting the handoff, and report the check's result (pass, or which rows were added/superseded) in the handoff.
+
+---
+
+## Parallel Execution And Sub-Agents
+
+Stories, or independent tasks within a story, may be handed to sub-agents, in parallel or one after another, in either mode. This is permitted **only** under `spec/workflows/shared/SHARED-POLICIES.md` §Sub-Agent Delegation Rules, which is a hard rule, not guidance:
+
+1. **Full brief.** Every delegation prompt carries:
+   - the canonical documents to read
+   - Story/task IDs and each task's `Layer`
+   - the **exact** progress file and traceability shard paths
+   - the per-stage progress, traceability, and metrics writes required
+   - the mode
+   - the Write-Back Receipt instruction
+2. **The sub-agent writes its own story's files.** It writes its progress file and traceability shard at each stage, before it returns, and it never defers them to the parent.
+3. **The parent verifies by reading the files.** Before a delegated story advances, is marked `done`, or appears in any handoff, the parent runs the Parent Verification Gate. Any gap is re-dispatched or backfilled first.
+4. **Repo-wide files are written by the parent, one at a time.** These are `spec/traceability/shared/STORY-DEPENDENCIES.md`, `spec/progress/shared/**`, and `spec/architecture/**`. Parallel sub-agents only propose rows for them.
+
+Delegation never relaxes review gates, stage order, or the `Layer` branch. A sub-agent runs the same stages under the same contracts, and in interactive mode it stops at the same gates.
 
 ---
 
@@ -261,7 +287,7 @@ Before any task-to-code work begins for a given layer, confirm that layer's code
 
 ### Stage 6: Task-To-Code Execution
 
-- for each approved task (executed sequentially by default):
+- for each approved task (executed sequentially by default; sub-agent or parallel execution only per `## Parallel Execution And Sub-Agents`):
   - read the task file's `Layer` field first
   - route: `Layer: frontend` -> write to `src-code-frontend/`, read `ARCH-DECISIONS.md` AD-FRONTEND-* section, read `src-code-frontend/AGENTS.md` + `src-code-frontend/rules/`; `Layer: backend` -> write to `src-code-backend/`, read AD-BACKEND-* section, read `src-code-backend/AGENTS.md` + `src-code-backend/rules/`
   - produce implementation output in the routed code root
@@ -321,6 +347,7 @@ Before any task-to-code work begins for a given layer, confirm that layer's code
 - update all progress artifacts to reflect completion state, for both layers
 - confirm full traceability chain per task: frontend tasks show the 4-link chain, backend tasks show the 5-link chain, both visible in the one traceability shard's `Layer` column
 - record any remaining open questions or gaps explicitly
+- for every story/task handled by a sub-agent, confirm the Parent Verification Gate (`SHARED-POLICIES.md` §Sub-Agent Delegation Rules) has passed
 - mark the work item `done` only if all checks pass and all gaps are recorded
 
 ---
@@ -357,6 +384,8 @@ At minimum, this command must maintain:
 - unit tests -> integration tests (created at Stage 10, backend-tagged tasks only)
 
 If the workflow stops at any stage, traceability for all produced artifacts must still be updated before the session ends.
+
+Work delegated to a sub-agent is held to exactly these obligations. The sub-agent writes them, and the parent verifies them, per `## Parallel Execution And Sub-Agents`.
 
 ---
 

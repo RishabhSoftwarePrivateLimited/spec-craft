@@ -176,6 +176,65 @@ If the next step would require editing a locked earlier-phase artifact, say so e
 
 ---
 
+## Sub-Agent Delegation Rules
+
+**Hard rule. Applies to any command that hands stage work to a sub-agent (Agent/Task tool or any host's equivalent), parallel or sequential, in interactive and auto mode alike.** A sub-agent starts with no context beyond the brief it is given. It does not inherit this document, `TRACEABILITY-RULES.md`, or the orchestrating command's contract. Progress and traceability duties that are not handed over explicitly get lost, so this section makes the hand-over mandatory and checks it.
+
+### Ownership
+
+- A sub-agent working on a story **owns** that story's progress file (`spec/progress/<module>/progress-<STORY-ID>.md`) and traceability shard (`spec/traceability/<module>/<STORY-ID>/TRACEABILITY.md`).
+- It writes them **itself, at each stage it runs, before it returns**. It never leaves them for the parent to do "later".
+- Delegating a stage delegates every write obligation of that stage:
+  - progressive traceability links for each task's Layer chain (`TRACEABILITY-RULES.md`)
+  - per-story and per-task progress sections (`## Intake`, `## LLD`, `## Decomposition`, and under `## Task: TASK-<id>`: `### Status` / `### Implementation` / `### Testing` / `### Integration Testing` (backend only) / `### Validation` / `### Blockers` / `### Decisions`)
+  - one `Workflow Metrics` row per stage (§Metrics Rules)
+  - any Conflict Decision / Blocker / Decision rows (§Conflict Decision Rules, §Blocker And Decision Log Rules)
+
+### Mandatory Delegation Brief
+
+The parent's prompt to the sub-agent must contain all of the following. A brief missing any item is a workflow violation.
+
+1. the canonical documents to read first: `spec/AGENTS.md`, the stage workflow doc, the command contract for each delegated stage, this file, `spec/workflows/shared/TRACEABILITY-RULES.md`
+2. Story ID, task ID(s), and each task's `Layer`
+3. the **exact** progress file path and traceability shard path
+4. the required writes per stage (the Ownership list above)
+5. the mode (`interactive` / `auto`)
+6. the instruction to return a Write-Back Receipt (below) and not to write shared files (see Shared-File Serialisation)
+
+### Write-Back Receipt
+
+The sub-agent's final message must include:
+
+```
+Write-Back Receipt:
+Story ID:
+Progress File: <path> — sections appended: <list per stage/task>
+Traceability Shard: <path> — rows appended: <IDs/links per stage/task>
+Workflow Metrics Rows: <one per stage run>
+Conflict / Blocker / Decision Rows: <IDs or none>
+Proposed Shared-File Rows: <rows for the parent to write, or none>
+```
+
+`none` in a progress or traceability field is valid only with a stated reason (e.g. the stage produced no artifact).
+
+### Shared-File Serialisation
+
+Parallel sub-agents must not write repo-wide files. These are: `spec/traceability/shared/STORY-DEPENDENCIES.md`, anything under `spec/progress/shared/` or `spec/traceability/shared/`, and anything under `spec/architecture/`. Concurrent writes to one file silently lose updates. A sub-agent returns the rows it would have written under `Proposed Shared-File Rows`, and the parent writes them one at a time after the sub-agents return. Per-story files have exactly one owner, so the sub-agent writes those directly.
+
+### Parent Verification Gate — Non-Skippable
+
+After each sub-agent returns, the parent must **read the actual files**, not rely on the receipt alone. It does this before it marks that story's stage done, starts the next stage for that story, or emits any handoff. It confirms that:
+
+1. the progress file has the expected sections for every stage and task the sub-agent ran
+2. the traceability shard has rows covering each task's Layer chain up to the stage reached (4 links for frontend, 5 for backend)
+3. there is one `Workflow Metrics` row per stage run, each with a valid `Stage` value
+
+On any gap, the parent either re-dispatches the same sub-agent with the gap listed, or backfills the missing entries itself from the artifacts the sub-agent produced. Either way, the fix happens before continuing. A missing progress or traceability entry **can never** be logged as an Accepted Issue, and fixing it does not count toward auto mode's revise-retry cap. It is a write-back, not a content revision.
+
+§Done Criteria Rules (item 5, and "execution overall done") apply unchanged to delegated work: a story is never `done` while this gate has not passed for every sub-agent that worked on it.
+
+---
+
 ## Metrics Rules
 
 ### When To Record
