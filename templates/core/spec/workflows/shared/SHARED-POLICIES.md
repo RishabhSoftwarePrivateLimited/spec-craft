@@ -182,6 +182,8 @@ If the next step would require editing a locked earlier-phase artifact, say so e
 
 Record metrics after producing primary artifact(s), before the hard stop. One row per execution turn. Revisions add new rows — never overwrite existing rows.
 
+**One row per stage — never a rollup.** A single row covering several stages or a whole story (e.g. `Command = orchestrate auto (all stages)`, `Stage = Intake → Validation`) is never valid. When one invocation runs several stages (`/speccraft.orchestrate`, especially auto mode), write one row per stage, each with that stage's own `Start`/`End` and token counts — sdd-insights buckets rows by exact `Stage` value, so a rollup row is silently dropped from its per-stage view.
+
 ### Schema
 
 | Field | Description | How To Populate |
@@ -189,7 +191,7 @@ Record metrics after producing primary artifact(s), before the hard stop. One ro
 | Story ID | Work item ID | From command input |
 | Layer | `frontend` / `backend` / `shared` | From task's `Layer` field; `shared` for stages that precede the FRONTEND/BACKEND fork (intake, decomposition-level rows covering both) |
 | Command | Command name | tech-design / decompose / implement / unit-test / integration-test / validate / change |
-| Stage | Workflow stage | Intake / LLD / Decomposition / Implementation / Testing / Integration Testing / Validation / Change Request |
+| Stage | Workflow stage | Exactly one of: Intake / LLD / Decomposition / Implementation / Testing / Integration Testing / Validation / Change Request (non-story commands use the single value their own contract names, e.g. `Scaffold`). No ranges (`Intake → Validation`), no combined values, no extra text — sdd-insights matches this field exactly |
 | Date | YYYY-MM-DD | Current date |
 | Model | AI model ID | e.g., claude-sonnet-4-6 |
 | Start | YYYY-MM-DD HH:MM | Real wall-clock timestamp, captured at command start (see Duration Capture) |
@@ -250,6 +252,8 @@ Real usage first, char-count fallback second — never fabricate a middle number
 When a command is revised: do not edit the existing row — it is immutable history. Append a new row with same Story ID + Command, Status = `in-review`. Add revision reason to Notes.
 
 **Metrics-only revise** (triggered by an unjustified `n/a`, per §Duration Capture step 5): the stage's overall review outcome for that turn is `revise` — per the Human-Approval Rule, downstream progression waits for `approved`, and an unjustified `n/a` row means this turn is not yet `approved`, same as any other unresolved review finding. What makes this revise cheap is scope, not exemption: fixing it does not reopen the LLD/task/code/test content review — it only requires appending a new metrics row, same Story ID + Command, Status `in-review`, that either supplies a real `Start`/`End` (if genuinely recoverable, e.g. it exists in the session transcript even though it wasn't captured live) or an explicit justification in `Notes` for why `n/a` stands. Once that row is appended, re-review is a one-line check, not a re-read of the artifact.
+
+**Invalid-Stage / rollup rows** (a `Stage` value not in the Schema list, or one row spanning several stages — see §When To Record): the row is never deleted. Move it, unchanged, under a `## Workflow Metrics — Superseded Rows` heading in the same shard (sdd-insights does not parse that heading, so it drops out of the totals without losing history), then append the corrected per-stage rows under `## Workflow Metrics`, reconstructing each stage's `Start`/`End` and tokens from the session transcript per §Duration Capture / §Token Capture. Note the reason in each new row's `Notes`. Like the `n/a` case, this is a metrics-only revise — the artifact itself is not reopened.
 
 ### Where To Write
 

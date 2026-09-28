@@ -21,15 +21,25 @@ templates/              everything under here is copied INTO the target project,
 ```js
 module.exports = {
   core:     { templateGroup: 'core',          dirs: ['spec'], files: ['AGENTS.md', 'README.md'], mergeGitignore: true },
-  claude:   { templateGroup: 'agent-claude',   dirs: ['.claude'], files: ['CLAUDE.md'], global: { templateDir: '.claude/commands', targetDir: '.claude/commands' } },
-  gemini:   { templateGroup: 'agent-gemini',   dirs: ['.gemini'], files: ['GEMINI.md'], global: { templateDir: '.gemini/commands', targetDir: '.gemini/commands' } },
-  copilot:  { templateGroup: 'agent-copilot',  dirs: ['.github'] },
-  agentic:  { templateGroup: 'agent-agnostic', dirs: ['.agents'] },
-  gitHooks: { templateGroup: 'git-hooks',      dirs: ['.githooks'], postStep: 'configureHooksPath' },
+  claude:      { templateGroup: 'agent-claude',   dirs: ['.claude'], files: ['CLAUDE.md'], global: [{ templateDir: '.claude/commands', targetDir: '.claude/commands' }] },
+  gemini:      { templateGroup: 'agent-gemini',   dirs: ['.gemini'], sharedFiles: ['GEMINI.md'], global: [{ templateDir: '.gemini/commands', targetDir: '.gemini/commands' }] },
+  antigravity: { templateGroup: 'agent-gemini',   sharedFiles: ['GEMINI.md'], includes: ['agentic'],
+                 global: [{ templateGroup: 'agent-agnostic', templateDir: '.agents/skills', targetDir: '.agents/skills' }] },
+  copilot:     { templateGroup: 'agent-copilot',  dirs: ['.github'] },
+  agentic:     { templateGroup: 'agent-agnostic', dirs: ['.agents'], global: [{ templateDir: '.agents/skills', targetDir: '.agents/skills' }] },
+  gitHooks:    { templateGroup: 'git-hooks',      dirs: ['.githooks'], postStep: 'configureHooksPath' },
 }
 ```
 
-`src/index.js` always includes `core`; includes `claude`/`gemini`/`copilot`/`agentic` only if the user selected them; includes `gitHooks` only if the hook prompt was confirmed. Nothing else in the codebase branches on agent name — adding a fifth agent means adding one manifest entry and one `templates/agent-<name>/` folder.
+`src/index.js` always includes `core`; includes an agent group only if the user selected it; includes `gitHooks` only if the hook prompt was confirmed. Nothing else in the codebase branches on agent name — adding an agent means adding one manifest entry (and a `templates/agent-<name>/` folder if it needs its own templates).
+
+Optional group fields:
+
+- `includes` — other groups pulled in whenever this one is selected (`prompts.computeSelectedKeys`), skipped if already installed. Antigravity uses it to reuse `agent-agnostic`'s `.agents/skills` rather than duplicating templates.
+- `sharedFiles` — written only if absent, never a conflict. Lets Gemini CLI and Antigravity share `GEMINI.md` in either install order.
+- `global` — an array of user-level (`~/`) install targets. Each entry's `templateGroup` defaults to the group's own.
+
+Install scope (`project` / `global` / `both`, from `prompts.resolveScope` or `--scope`): under `global`, a group with a `global` entry skips its project `dirs` (the commands land in `~/` instead) but still writes its memory file as a shared file, since that points at the project's `spec/`.
 
 ## Copy engine rules (`src/copy.js`)
 
@@ -40,7 +50,7 @@ module.exports = {
 
 ## Global install (`src/postSteps.installGlobal`)
 
-Per-agent, not per-file-group: reads every file in `templates/agent-<name>/.<name>/commands/`, and for each one, copies it to `~/.{name}/commands/<file>` only if nothing already exists there. `os.homedir()` is not injectable, so tests that exercise this function set `process.env.HOME`/`process.env.USERPROFILE` before calling it and restore them after — see `test/copy.test.js`.
+Only runs when the install scope is `global` or `both`. Per-agent, not per-file-group: for each entry in the group's `global` array, reads every file/folder in the entry's template dir and copies it to `~/<targetDir>/<entry>` only if nothing already exists there. `installGlobalAll` dedupes targets shared by several selected agents (Antigravity and Agent-agnostic both use `~/.agents/skills`) so each is installed once. `os.homedir()` is not injectable, so tests that exercise this function set `process.env.HOME`/`process.env.USERPROFILE` before calling it and restore them after — see `test/copy.test.js`.
 
 ## Why no branching copy.js
 

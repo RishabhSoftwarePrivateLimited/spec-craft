@@ -116,6 +116,8 @@ A `blocked` outcome is never auto-approved without a logged reason — it is alw
 
 - **Final consolidated handoff**: at the end of an auto run (whether it reaches Stage 13 or ends early on an unrecoverable input error), output one summary covering every stage's outcome, every Accepted Issue, and every auto-resolved conflict/blocker, so a human can audit the entire unattended run after the fact.
 - Metrics (`Workflow Metrics` rows) and traceability updates are required at every stage exactly as in interactive mode — auto mode changes gate-pause behavior only, nothing else.
+- **One metrics row per stage, never one per run.** Running all stages unattended in one invocation does not make it one unit of work: each stage's own row (written by the stage's underlying command contract, with its own `Start`/`End`) is required. A story-level rollup row (`Command = orchestrate auto (all stages)`, `Stage = Intake → Validation`, or any other range/combined value) is forbidden — see `spec/workflows/shared/SHARED-POLICIES.md` §Metrics Rules / §When To Record.
+- **Metrics self-check before the Final consolidated handoff.** For each stage that ran in this story — Intake, LLD, Decomposition, Implementation, Testing, Integration Testing (backend-tagged tasks only), Validation — confirm the story's traceability shard has at least one `Workflow Metrics` row whose `Stage` is exactly that value, for each in-scope layer, and that no row carries a range/combined `Stage`. Fix any missing or invalid row per `SHARED-POLICIES.md` §Revision Rows (Invalid-Stage / rollup rows) before emitting the handoff, and report the check's result (pass, or which rows were added/superseded) in the handoff.
 
 ---
 
