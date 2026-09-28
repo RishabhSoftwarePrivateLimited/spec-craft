@@ -180,6 +180,11 @@ If the next step would require editing a locked earlier-phase artifact, say so e
 
 **Hard rule. Applies to any command that hands stage work to a sub-agent (Agent/Task tool or any host's equivalent), parallel or sequential, in interactive and auto mode alike.** A sub-agent starts with no context beyond the brief it is given. It does not inherit this document, `TRACEABILITY-RULES.md`, or the orchestrating command's contract. Progress and traceability duties that are not handed over explicitly get lost, so this section makes the hand-over mandatory and checks it.
 
+Where it is wired in:
+- `/speccraft.orchestrate`: § Parallel Execution And Sub-Agents
+- every story-level command (`tech-design`, `decompose`, `implement`, `unit-test`, `integration-test`, `validate`, `change`): its own `## Sub-Agent Delegation` section, which lists the exact writes its stage requires
+- `spec/AGENTS.md`, which sub-agents read on entry
+
 ### Ownership
 
 - A sub-agent working on a story **owns** that story's progress file (`spec/progress/<module>/progress-<STORY-ID>.md`) and traceability shard (`spec/traceability/<module>/<STORY-ID>/TRACEABILITY.md`).

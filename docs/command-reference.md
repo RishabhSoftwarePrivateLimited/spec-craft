@@ -37,7 +37,7 @@ Every stage command `/speccraft.orchestrate` chains through also supports the sa
 
 In every case, auto mode only removes the pause at that command's own review gate — it does not chain into the next command. Chaining across commands remains exclusively `/speccraft.orchestrate`'s responsibility, in both interactive and auto mode.
 
-`/speccraft.orchestrate` may hand stories or tasks to sub-agents, including several in parallel, in either mode. Delegation is governed by a hard rule (`spec/workflows/shared/SHARED-POLICIES.md` § Sub-Agent Delegation Rules):
+`/speccraft.orchestrate` and every story-level command (`tech-design`, `decompose`, `implement`, `unit-test`, `integration-test`, `validate`, `change`) may hand stories or tasks to sub-agents, including several in parallel, in either mode. Delegation is governed by one hard rule (`spec/workflows/shared/SHARED-POLICIES.md` § Sub-Agent Delegation Rules). Each command's own `## Sub-Agent Delegation` section lists the exact writes its stage requires. `/speccraft.change` never delegates Pass 1 (Discovery).
 
 - The parent's brief must name the story's exact progress file and traceability shard.
 - The sub-agent writes both at every stage before it returns, and ends with a Write-Back Receipt.

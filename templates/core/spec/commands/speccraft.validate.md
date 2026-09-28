@@ -303,6 +303,26 @@ Next Recommended Action:
 
 ---
 
+## Sub-Agent Delegation
+
+This command normally runs in a single agent. Sometimes it hands part of its work to a sub-agent, in parallel or not, in either mode (for example, one sub-agent per task when several tasks are validated together). When it does, `spec/workflows/shared/SHARED-POLICIES.md` §Sub-Agent Delegation Rules applies in full, as a hard rule:
+
+1. **Full brief.** The brief names the story's exact `spec/progress/<module>/progress-<STORY-ID>.md` and `spec/traceability/<module>/<STORY-ID>/TRACEABILITY.md`, lists the writes below, states the mode, and asks for a Write-Back Receipt.
+2. **The sub-agent writes its own story files.** It writes them before it returns, and it never defers them to the parent.
+3. **The parent verifies by reading the files.** Before this command's handoff, the parent runs the Parent Verification Gate. Any gap is re-dispatched or backfilled, and it is never logged as an Accepted Issue.
+4. **Repo-wide files are parent-only and written one at a time:** `spec/traceability/shared/**`, `spec/progress/shared/**`, `spec/architecture/**`.
+
+Writes this command requires for each story or task:
+
+- the `### Validation` record and `### Status` under `## Task: TASK-<id>`
+- the chain-verification result in the story's traceability shard (4-link frontend, 5-link backend)
+- the `Workflow Metrics` row for `Validation`
+- any `### Blockers` / `### Decisions` rows
+
+If this command is itself running inside a sub-agent (for example, dispatched by `/speccraft.orchestrate`), it is on the sub-agent side of this rule. It makes the writes above before returning and ends with a Write-Back Receipt.
+
+---
+
 ## Auto Mode
 
 Auto mode produces the same Validation record under the same Failure And Block Conditions and Hard Boundary Rules as interactive mode. The only thing it changes is **whether execution pauses after a `blocked` outcome**. There is no `revise` outcome to self-review here — this command is read-only, per §Done Criteria above — so auto mode has nothing to self-approve; it only changes how `blocked` is handled.

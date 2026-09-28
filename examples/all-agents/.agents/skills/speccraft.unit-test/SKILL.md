@@ -23,4 +23,10 @@ Rules before starting (auto mode — `auto` token present):
 - still do not run /speccraft.integration-test or /speccraft.validate — this command does not auto-chain into the next stage even in auto mode
 - report the same minimal handoff block with `Mode: auto`, then stop
 
+Rules in both modes — sub-agents (hard rule):
+- if you hand any of this work to a sub-agent (parallel or not), follow `spec/commands/speccraft.unit-test.md` § Sub-Agent Delegation
+- the brief must name the story's exact `spec/progress/<module>/progress-<STORY-ID>.md` and `spec/traceability/<module>/<STORY-ID>/TRACEABILITY.md` and the writes required; the sub-agent writes them before returning and ends with a Write-Back Receipt
+- read those files to verify them, and backfill or re-dispatch any gap before your handoff
+- if you are running as a sub-agent yourself, make those writes before returning and end with a Write-Back Receipt
+
 The canonical contract now documents Layer-field routing: the task's Layer selects the locked test framework and rules subset (frontend vs backend), plus the full `/speccraft.unit-test auto <task-id>` signature and § Auto Mode mechanics.

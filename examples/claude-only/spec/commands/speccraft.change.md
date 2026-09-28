@@ -92,6 +92,28 @@ None of the above may be worked around by narrowing scope silently — a conflic
 
 ---
 
+## Sub-Agent Delegation
+
+This command normally runs in a single agent. Sometimes it hands part of its work to a sub-agent, in parallel or not, (for example, one sub-agent per cascaded story during Pass 2). **Pass 1 (Discovery) is never delegated.** It needs one whole-graph view to detect cycles and conflicts atomically, so it always runs in the parent. When this command does delegate, `spec/workflows/shared/SHARED-POLICIES.md` §Sub-Agent Delegation Rules applies in full, as a hard rule:
+
+1. **Full brief.** The brief names the story's exact `spec/progress/<module>/progress-<STORY-ID>.md` and `spec/traceability/<module>/<STORY-ID>/TRACEABILITY.md`, lists the writes below, states the mode, and asks for a Write-Back Receipt.
+2. **The sub-agent writes its own story files.** It writes them before it returns, and it never defers them to the parent.
+3. **The parent verifies by reading the files.** Before this command's handoff, the parent runs the Parent Verification Gate. Any gap is re-dispatched or backfilled, and it is never logged as an Accepted Issue.
+4. **Repo-wide files are parent-only and written one at a time:** `spec/traceability/shared/STORY-DEPENDENCIES.md` (including rows for newly spawned delta stories), `spec/progress/shared/**`, `spec/architecture/**`.
+
+Writes this command requires for each story or task:
+
+- for every story in the bundle: the LLD delta and delta task files
+- `Source = CR-<n>` business → LLD and LLD → task traceability rows
+- the `## Change Request: CR-<n>` progress section (Role `originating` with the Cascade Impact table for S only; Role `cascaded` for every other story), using that story's own CR number
+- the `Workflow Metrics` row for `Change Request`
+
+Step 8 (submitting the bundle for combined review) and Exit Behavior must not run until the Parent Verification Gate has passed for **every** story in the bundle. A cascaded story with missing progress or traceability entries makes the bundle incomplete, not partially approved.
+
+If this command is itself running inside a sub-agent (for example, dispatched by `/speccraft.orchestrate`), it is on the sub-agent side of this rule. It makes the writes above before returning and ends with a Write-Back Receipt.
+
+---
+
 ## Exit Behavior
 
 **HARD STOP after the bundle is produced (or after Pass 1 blocks).**
