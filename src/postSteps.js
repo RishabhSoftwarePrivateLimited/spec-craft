@@ -26,33 +26,68 @@ function configureHooksPath(targetDir) {
   return { ok: true };
 }
 
-// Global (user-level) command install for an agent selected in the multi-select.
-// Merge, never clobber: an existing file at the global path is left untouched
-// (skip + warn) unless --force. Scoped to command files only, never
-// CLAUDE.md/GEMINI.md, which are personal and out of scope for an installer.
-function installGlobal(agentKey, { templatesRoot, force }) {
+// Global (user-level) command/skill install for a selected agent, used when
+// the install scope is 'global' or 'both'. Merge, never clobber: an existing
+// entry at the global path is left untouched (skip + warn) unless --force.
+// Scoped to command/skill files only, never CLAUDE.md/GEMINI.md, which are
+// personal and out of scope for an installer.
+function installGlobal(agentKey, { templatesRoot, force, only }) {
   const group = manifest[agentKey];
-  if (!group || !group.global) return { installed: [], skipped: [] };
-
-  const groupTemplateDir = path.join(templatesRoot, group.templateGroup);
-  const srcDir = path.join(groupTemplateDir, group.global.templateDir);
-  const destDir = path.join(os.homedir(), group.global.targetDir);
-
-  fs.ensureDirSync(destDir);
-
   const installed = [];
   const skipped = [];
-  for (const entry of fs.readdirSync(srcDir)) {
-    const src = path.join(srcDir, entry);
-    const dest = path.join(destDir, entry);
-    if (fs.existsSync(dest) && !force) {
-      skipped.push(dest);
-      continue;
+  if (!group || !group.global) return { installed, skipped };
+
+  for (const spec of only || group.global) {
+    const srcDir = path.join(templatesRoot, spec.templateGroup || group.templateGroup, spec.templateDir);
+    const destDir = path.join(os.homedir(), spec.targetDir);
+
+    fs.ensureDirSync(destDir);
+
+    for (const entry of fs.readdirSync(srcDir)) {
+      const src = path.join(srcDir, entry);
+      const dest = path.join(destDir, entry);
+      if (fs.existsSync(dest) && !force) {
+        skipped.push(dest);
+        continue;
+      }
+      fs.copySync(src, dest, { overwrite: !!force });
+      installed.push(dest);
     }
-    fs.copySync(src, dest, { overwrite: !!force });
-    installed.push(dest);
   }
   return { installed, skipped };
 }
 
-module.exports = { configureHooksPath, installGlobal };
+// Unique global (~/) targets across a set of agents, first owner wins — e.g.
+// Antigravity and Agent-agnostic both target ~/.agents/skills, which should
+// be listed and installed once, not twice (the second pass would only
+// report every entry as "skipped").
+function globalTargets(agentKeys) {
+  const seen = new Set();
+  const targets = [];
+  for (const key of agentKeys) {
+    const group = manifest[key];
+    for (const spec of (group && group.global) || []) {
+      if (seen.has(spec.targetDir)) continue;
+      seen.add(spec.targetDir);
+      targets.push({ key, label: group.label, targetDir: spec.targetDir });
+    }
+  }
+  return targets;
+}
+
+function installGlobalAll(agentKeys, opts) {
+  const owners = new Set(globalTargets(agentKeys).map((t) => `${t.key}:${t.targetDir}`));
+  const installed = [];
+  const skipped = [];
+  for (const key of agentKeys) {
+    const group = manifest[key];
+    if (!group || !group.global) continue;
+    const own = group.global.filter((spec) => owners.has(`${key}:${spec.targetDir}`));
+    const result = installGlobal(key, { ...opts, only: own });
+    installed.push(...result.installed);
+    skipped.push(...result.skipped);
+  }
+  return { installed, skipped };
+}
+
+module.exports = { configureHooksPath, installGlobal, installGlobalAll, globalTargets };

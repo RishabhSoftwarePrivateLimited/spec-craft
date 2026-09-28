@@ -1,6 +1,6 @@
-# GEMINI.md — Gemini CLI Bootstrap
+# GEMINI.md — Gemini CLI / Antigravity Bootstrap
 
-This file is the entry point for Gemini CLI agents entering this repository.
+This file is the entry point for Gemini agents entering this repository — Gemini CLI (commands in `.gemini/commands/`) or Gemini in the Antigravity IDE (commands in `.agents/skills/`).
 
 Read this file first, then follow the Read First list below before doing any work.
 
@@ -65,7 +65,7 @@ If execution implementation work is active, also read:
 
 ## Workflow Commands
 
-Commands are defined as contracts in `spec/commands/`. The root `.claude/commands/` folder has thin entry-point stubs pointing to those contracts.
+Commands are defined as contracts in `spec/commands/`. Thin entry-point stubs pointing to those contracts live in `.gemini/commands/` (Gemini CLI) and/or `.agents/skills/` (Antigravity), depending on which was installed — or in `~/.gemini/commands/` / `~/.agents/skills/` if installed globally.
 
 | Command | Contract | What It Does |
 |---------|----------|--------------|

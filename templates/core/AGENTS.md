@@ -35,7 +35,7 @@ This repository is organized with clear separation, and has **two independent pr
 - `src-code-frontend/` = frontend project (created by `/speccraft.scaffold frontend`, structured per the frontend stack locked in `spec/architecture/ARCH-DECISIONS.md`)
 - `src-code-backend/` = backend project (created by `/speccraft.scaffold backend`, structured per the backend stack locked in `spec/architecture/ARCH-DECISIONS.md`)
 - `.claude/commands/` = thin root-level command stubs for Claude Code — each points to its canonical contract under `spec/commands/`
-- `.agents/skills/` = same commands as Codex CLI skills (`SKILL.md` per command) — each points to its canonical contract under `spec/commands/`
+- `.agents/skills/` = same commands as Codex CLI / Antigravity skills (`SKILL.md` per command) — each points to its canonical contract under `spec/commands/`
 - `.github/prompts/` = same commands as GitHub Copilot Chat prompt files — each points to its canonical contract under `spec/commands/`
 - `.gemini/commands/` = same commands as Gemini CLI TOML commands — each points to its canonical contract under `spec/commands/`
 
@@ -47,7 +47,7 @@ AI-first workflow should begin from `spec/`, not from either code root.
 
 ## Commands
 
-`.claude/commands/` (Claude Code), `.agents/skills/` (Codex CLI), `.github/prompts/` (GitHub Copilot), `.gemini/commands/` (Gemini CLI) each hold thin bootstrap entrypoints only — every one tells the agent to read its counterpart under `spec/commands/` before acting.
+`.claude/commands/` (Claude Code), `.agents/skills/` (Codex CLI, Antigravity), `.github/prompts/` (GitHub Copilot), `.gemini/commands/` (Gemini CLI) each hold thin bootstrap entrypoints only — every one tells the agent to read its counterpart under `spec/commands/` before acting.
 
 Cursor, Grok Build, Windsurf/Devin, and Qodo also read this root `AGENTS.md` directly — no dedicated folder strictly required for those, but Qodo's own `agents/` format is added anyway for its native slash-command menu.
 

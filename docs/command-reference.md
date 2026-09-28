@@ -1,6 +1,6 @@
 # Command Reference
 
-The same 13 SDD workflow commands ship in 4 formats — one per agent. Selecting an agent in the install prompt installs its column below (project-level, plus the global copy for Claude/Gemini — see [usage.md](usage.md#global-user-level-install)).
+The same 13 SDD workflow commands ship in 4 formats — one per agent. Selecting an agent in the install prompt installs its column below — into the project, your home directory, or both, depending on the install scope (see [usage.md](usage.md#global-user-level-install)).
 
 | Command | Contract (always installed, `spec/commands/`) | Claude (`.claude/commands/`) | Gemini (`.gemini/commands/`) | Copilot (`.github/prompts/`) |
 |---|---|---|---|---|
@@ -20,7 +20,7 @@ The same 13 SDD workflow commands ship in 4 formats — one per agent. Selecting
 
 `spec/commands/*.md` is the agent-agnostic contract — the authoritative description of what each command does. The per-agent files are thin wrappers around it in that agent's native format; see each project's own `spec/AGENTS.md` for the read order.
 
-The **Agent-agnostic** option (`.agents/skills/`) ships the same 13 as reusable skill definitions, one subfolder per command, for any agent tooling without a dedicated column above.
+The **Agent-agnostic** option (`.agents/skills/`) ships the same 13 as reusable skill definitions, one subfolder per command, for any agent tooling without a dedicated column above. The **Antigravity (Gemini)** option installs this same `.agents/skills/` folder (plus `GEMINI.md`), since that's the only place Antigravity loads commands from — the Gemini column above is for the terminal Gemini CLI.
 
 `/speccraft.orchestrate` also supports an unattended **auto mode** — `/speccraft.orchestrate auto <business-spec-file>` runs the full 13-stage workflow with no human-approval pauses at any gate; the agent reviews its own work at every stage and logs every decision (including how it resolved any `blocked` conflict) for after-the-fact audit. See `spec/commands/speccraft.orchestrate.md` § Auto Mode for exactly how review, revision, and blocked handling work without a human in the loop.
 

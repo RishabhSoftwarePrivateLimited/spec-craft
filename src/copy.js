@@ -18,16 +18,43 @@ class ConflictError extends Error {
   }
 }
 
-// Every top-level dir/file this set of groups would write, relative to targetDir.
-// Used both for the pre-flight conflict check and for the pre-write confirm summary.
-function plannedPaths(selectedKeys) {
-  const paths = [];
+// Every top-level dir/file this set of groups would write, as
+// { rel, templateGroup } entries (rel is relative to targetDir, deduped).
+// - scope 'global': a group with a `global` install skips its project dirs
+//   (the commands land in ~/ instead); its memory files (CLAUDE.md,
+//   GEMINI.md) are still written, since they point at the project's spec/,
+//   but become shared — i.e. kept as-is if already present.
+// - sharedFiles are only planned when absent from targetDir (or with force).
+function plannedEntries(selectedKeys, { scope = 'project', targetDir, force = false } = {}) {
+  const entries = [];
+  const seen = new Set();
+  const add = (rel, templateGroup) => {
+    if (seen.has(rel)) return;
+    seen.add(rel);
+    entries.push({ rel, templateGroup });
+  };
+  const absent = (rel) => force || !targetDir || !fs.existsSync(path.join(targetDir, rel));
+
   for (const key of selectedKeys) {
     const group = manifest[key];
-    for (const d of group.dirs || []) paths.push(d);
-    for (const f of group.files || []) paths.push(f);
+    const globalOnly = scope === 'global' && !!group.global;
+    if (!globalOnly) {
+      for (const d of group.dirs || []) add(d, group.templateGroup);
+    }
+    for (const f of group.files || []) {
+      if (!globalOnly || absent(f)) add(f, group.templateGroup);
+    }
+    for (const f of group.sharedFiles || []) {
+      if (absent(f)) add(f, group.templateGroup);
+    }
   }
-  return paths;
+  return entries;
+}
+
+// Relative paths only — used for the pre-flight conflict check and the
+// pre-write confirm summary.
+function plannedPaths(selectedKeys, opts) {
+  return plannedEntries(selectedKeys, opts).map((e) => e.rel);
 }
 
 // Per-path conflict check inside copySelected — deliberately separate from,
@@ -36,9 +63,9 @@ function plannedPaths(selectedKeys) {
 // this check is what makes copySelected() itself safe to call directly, e.g.
 // from test/copy.test.js or scripts/build-examples.js, which never go through
 // prompts.js at all.
-function findConflicts(selectedKeys, targetDir) {
+function findConflicts(selectedKeys, targetDir, { scope } = {}) {
   const conflicts = [];
-  for (const rel of plannedPaths(selectedKeys)) {
+  for (const rel of plannedPaths(selectedKeys, { scope, targetDir })) {
     // .gitignore is merged, never a conflict
     if (rel === '.gitignore') continue;
     if (fs.existsSync(path.join(targetDir, rel))) conflicts.push(rel);
@@ -99,33 +126,23 @@ function getInstalledSpecVersion(targetDir) {
   return match ? match[1] : null;
 }
 
-function copySelected(selectedKeys, { templatesRoot, targetDir, force, pkgVersion }) {
+function copySelected(selectedKeys, { templatesRoot, targetDir, force, pkgVersion, scope = 'project' }) {
   if (!force) {
-    const conflicts = findConflicts(selectedKeys, targetDir);
+    const conflicts = findConflicts(selectedKeys, targetDir, { scope });
     if (conflicts.length > 0) throw new ConflictError(conflicts);
   }
 
   const copied = [];
+  for (const { rel, templateGroup } of plannedEntries(selectedKeys, { scope, targetDir, force })) {
+    fs.copySync(path.join(templatesRoot, templateGroup, rel), path.join(targetDir, rel), {
+      overwrite: !!force,
+      errorOnExist: false,
+    });
+    copied.push(rel);
+  }
+
   for (const key of selectedKeys) {
-    const group = manifest[key];
-    const groupTemplateDir = path.join(templatesRoot, group.templateGroup);
-
-    for (const d of group.dirs || []) {
-      fs.copySync(path.join(groupTemplateDir, d), path.join(targetDir, d), {
-        overwrite: !!force,
-        errorOnExist: false,
-      });
-      copied.push(d);
-    }
-    for (const f of group.files || []) {
-      fs.copySync(path.join(groupTemplateDir, f), path.join(targetDir, f), {
-        overwrite: !!force,
-        errorOnExist: false,
-      });
-      copied.push(f);
-    }
-
-    if (group.mergeGitignore) {
+    if (manifest[key].mergeGitignore) {
       const result = mergeGitignore(templatesRoot, targetDir);
       copied.push(`.gitignore (${result.action})`);
     }
@@ -140,6 +157,7 @@ function copySelected(selectedKeys, { templatesRoot, targetDir, force, pkgVersio
 
 module.exports = {
   ConflictError,
+  plannedEntries,
   plannedPaths,
   findConflicts,
   mergeGitignore,

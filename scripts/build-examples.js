@@ -16,7 +16,7 @@ const pkgVersion = require('../package.json').version;
 
 const SCENARIOS = {
   'claude-only': ['core', 'claude'],
-  'all-agents': ['core', 'claude', 'gemini', 'copilot', 'agentic', 'gitHooks'],
+  'all-agents': ['core', 'claude', 'gemini', 'antigravity', 'copilot', 'agentic', 'gitHooks'],
 };
 
 function tree(dir, prefix = '') {
